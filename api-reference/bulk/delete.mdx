@@ -1,0 +1,40 @@
+---
+title: "Bulk Delete"
+description: "POST /v1/memory/bulk-delete — Delete up to 50 memories in one request"
+---
+
+## Endpoint
+
+```
+POST /v1/memory/bulk-delete
+```
+
+## Request Body
+
+```json
+{
+  "ids": [
+    "uuid-1",
+    "uuid-2",
+    "uuid-3"
+  ]
+}
+```
+
+Maximum **50 items** per request.
+
+## Response (200)
+
+```json
+{
+  "succeeded": 3,
+  "failed": 0,
+  "results": [
+    { "success": true, "id": "uuid-1" },
+    { "success": true, "id": "uuid-2" },
+    { "success": true, "id": "uuid-3" }
+  ]
+}
+```
+
+Partial failures are possible — items that fail include an `error` field.

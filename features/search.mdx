@@ -1,0 +1,89 @@
+---
+title: "Search"
+description: "Find memories by key, content, tags, or vector similarity"
+---
+
+## Search Methods
+
+Engram provides four ways to find memories:
+
+| Method | Use Case |
+|---|---|
+| **Key search** | Find by memory key substring |
+| **Content search** | Find by content text |
+| **Tag search** | Filter by metadata tags |
+| **Vector search** | Semantic similarity with embeddings |
+
+## Key & Content Search
+
+```bash
+curl -X POST "$API/memory/search" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "facts/",
+    "contentQuery": "Rust backend",
+    "type": "semantic",
+    "tags": ["architecture"],
+    "limit": 10
+  }'
+```
+
+| Parameter | Description |
+|---|---|
+| `query` | Matches against the memory `key` (case-insensitive substring) |
+| `contentQuery` | Matches against stored `contentPreview` (first 500 chars of content) |
+| `type` | Filter by memory type |
+| `tags` | Filter by metadata tags (matches any) |
+| `limit` | Max results (default 10, max 50) |
+
+<Note>
+  Encrypted content is **not indexed** for content search. Only unencrypted text memories have a searchable `contentPreview`.
+</Note>
+
+## Vector Search
+
+Store embeddings with memories, then find semantically similar ones:
+
+```bash
+# Store with embedding
+curl -X POST "$API/memory" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "embedding",
+    "key": "facts/blockchain",
+    "content": "Blockchain provides decentralized storage",
+    "embedding": [0.9, 0.1, 0.2, 0.05, 0.8]
+  }'
+
+# Search by similarity
+curl -X POST "$API/memory/vector-search" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "embedding": [0.85, 0.15, 0.25, 0.1, 0.75],
+    "threshold": 0.5,
+    "type": "embedding",
+    "limit": 5
+  }'
+```
+
+Results include a `score` field (0.0–1.0) indicating cosine similarity.
+
+## Listing with Filters
+
+The list endpoint supports filtering and sorting:
+
+```bash
+GET /v1/memory?type=semantic&pinned=true&minImportance=0.7&sortBy=importance&limit=20
+```
+
+| Parameter | Description |
+|---|---|
+| `type` | Filter by memory type |
+| `pinned` | `true` / `false` — filter by pin status |
+| `minImportance` | Minimum importance score (0.0–1.0) |
+| `sortBy` | Sort by `importance` (default: `createdAt` desc) |
+| `cursor` | Cursor for pagination (from `nextCursor`) |
+| `limit` | Results per page (default 20, max 50) |

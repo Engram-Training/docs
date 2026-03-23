@@ -1,0 +1,34 @@
+---
+title: "Delete Memory"
+description: "DELETE /v1/memory/:id — Delete a memory and its Shelby blob"
+---
+
+## Endpoint
+
+```
+DELETE /v1/memory/:id
+```
+
+## Response (200)
+
+```json
+{
+  "message": "Memory deleted",
+  "id": "7cf4b433-4bb2-4522-980e-ad3ee4f270b9",
+  "key": "facts/project-alpha",
+  "version": 2,
+  "promotedVersion": 1
+}
+```
+
+## Version Promotion
+
+When you delete the **latest** version, the previous version is automatically promoted to `isLatest: true`.
+
+If `promotedVersion` is present in the response, that version is now the active one.
+
+## Errors
+
+| Status | Reason |
+|---|---|
+| `404` | Memory not found |

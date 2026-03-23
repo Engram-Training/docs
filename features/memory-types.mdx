@@ -1,0 +1,52 @@
+---
+title: "Memory Types"
+description: "Choose the right memory type for each kind of knowledge"
+---
+
+Engram supports built-in memory types and custom types. Each type represents a category of knowledge your agent can store and recall.
+
+## Built-in Types
+
+| Type | Purpose | Example |
+|---|---|---|
+| `semantic` | Facts, knowledge, learned info | "Project Alpha uses Rust for the backend" |
+| `episodic` | Conversations, events, sessions | "User asked about pricing on March 22" |
+| `procedural` | How-to steps, workflows | "Deploy: push to main → CI runs → auto-deploy" |
+| `persona` | Agent identity, personality | "I am a helpful coding assistant" |
+| `preference` | User likes/dislikes | "User prefers dark mode" |
+| `goal` | Objectives, task tracking | "Finish API by Friday" |
+| `feedback` | Corrections, user input | "Don't use semicolons here" |
+| `relational` | Entity relationships | "Alice manages the backend team" |
+| `checkpoint` | State snapshots | Serialized task state |
+| `embedding` | Vector embeddings | Float arrays for RAG retrieval |
+| `working` | Short-lived scratch memory | Temporary computation results |
+| `file` | Binary files (PDF, images, video) | Uploaded documents and media |
+
+## Custom Types
+
+Create your own types by prefixing with `custom:` (max 64 characters):
+
+```json
+{
+  "type": "custom:meeting_notes",
+  "key": "standup/2026-03-22",
+  "content": "Discussed API versioning and blob naming..."
+}
+```
+
+## Choosing the Right Type
+
+<Tip>
+  Use **semantic** for facts your agent should "know," **episodic** for things that "happened," 
+  and **file** for binary content. When in doubt, use **semantic**.
+</Tip>
+
+| Scenario | Recommended Type |
+|---|---|
+| Agent learns a user's name | `semantic` |
+| Recording a conversation summary | `episodic` |
+| Storing deployment instructions | `procedural` |
+| Agent's system prompt / personality | `persona` |
+| Temporary computation state | `working` |
+| Uploaded PDF report | `file` |
+| Embedding vectors for RAG | `embedding` |

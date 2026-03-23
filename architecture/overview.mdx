@@ -1,0 +1,68 @@
+---
+title: "Architecture Overview"
+description: "How Engram connects AI agents to decentralized storage"
+---
+
+## System Architecture
+
+```
+┌──────────────┐     ┌──────────────────┐     ┌─────────────┐
+│   AI Agent   │────▶│   Engram API     │────▶│   Shelby    │
+│  (any LLM)   │◀────│   (Fastify)      │◀────│  Protocol   │
+└──────────────┘     └──────────────────┘     └─────────────┘
+                            │                        │
+                    ┌───────┴───────┐         ┌──────┴──────┐
+                    │  PostgreSQL   │         │    Aptos    │
+                    │  (metadata)   │         │ Blockchain  │
+                    └───────────────┘         └─────────────┘
+```
+
+## Components
+
+### Engram API
+
+A Fastify server that provides the RESTful API for agents:
+
+- **Routes** — CRUD, search, bulk, upload, TTL alerts, audit
+- **Authentication** — API key validation, agent isolation
+- **Rate limiting** — 60 writes/min, 300 reads/min
+- **Auto-funding** — Detects insufficient funds and refunds agent wallets
+
+### PostgreSQL
+
+Stores all metadata:
+
+- Memory entries (type, key, version, timestamps, tags)
+- Agent records (wallet addresses, API keys)
+- Access logs (audit trail)
+- Faucet logs (funding history)
+
+### Shelby Protocol
+
+Decentralized storage on the Aptos blockchain:
+
+- **Blobs** — Memory content stored as on-chain blobs
+- **Walrus** — Content-addressable blob storage
+- **Move contracts** — On-chain coordination and access control
+
+### Shinami Gas Station
+
+Optional gas sponsorship that covers Aptos transaction fees for agent operations, removing the need for agents to manage APT for gas.
+
+## Data Flow
+
+### Write Path
+
+1. Agent sends `POST /v1/memory` with content
+2. API validates, compresses text > 1KB
+3. Content is written as a **Shelby blob** on-chain
+4. Metadata saved to PostgreSQL
+5. Access logged to audit trail
+
+### Read Path
+
+1. Agent sends `GET /v1/memory/:id`
+2. API fetches metadata from PostgreSQL
+3. Content fetched from Shelby (on-chain blob)
+4. If compressed, auto-decompressed
+5. Response returned with content + metadata

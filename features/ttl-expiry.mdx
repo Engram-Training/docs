@@ -1,0 +1,71 @@
+---
+title: "TTL & Expiry"
+description: "Configure time-to-live, monitor expiring memories, and renew TTLs"
+---
+
+## Setting TTL
+
+Every memory has a time-to-live. Set it with `expiresIn`:
+
+```json
+{ "expiresIn": "30d" }
+```
+
+| Format | Example | Duration |
+|---|---|---|
+| `{n}s` | `30s` | 30 seconds |
+| `{n}m` | `15m` | 15 minutes |
+| `{n}h` | `6h` | 6 hours |
+| `{n}d` | `30d` | 30 days |
+
+**Default:** `30d`. **Minimum:** `10s`.
+
+## What Happens on Expiry
+
+A background job runs periodically and:
+1. Finds memories past their `expiresAt`
+2. Deletes the Shelby blob from the blockchain
+3. Marks the memory as `visibility: "expired"`
+
+<Note>
+  **Pinned memories** (`pinned: true`) are skipped by TTL cleanup. They never auto-expire.
+</Note>
+
+## Monitoring Expiring Memories
+
+Check which memories are about to expire:
+
+```bash
+GET /v1/memory/expiring?within=24h&type=semantic
+```
+
+## TTL Alerts & Renewal
+
+Get alerts and optionally renew TTLs in one call:
+
+```bash
+curl -X POST "$API/memory/ttl-alerts" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "within": "24h",
+    "renewIds": ["id1", "id2"],
+    "renewDuration": "30d"
+  }'
+```
+
+This returns the count of expiring memories and renews the specified ones.
+
+## Webhooks
+
+Subscribe to expiry events:
+
+```json
+{
+  "url": "https://your-app.com/webhook",
+  "events": ["memory.expiring"],
+  "config": { "alertWindow": "24h" }
+}
+```
+
+The webhook fires when memories enter the alert window.

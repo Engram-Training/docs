@@ -1,0 +1,37 @@
+---
+title: "Content Search"
+description: "POST /v1/memory/search — Full-text search inside memory content"
+---
+
+## Endpoint
+
+```
+POST /v1/memory/search
+```
+
+## Request Body
+
+```json
+{
+  "contentQuery": "Rust backend",
+  "query": "facts/",
+  "tags": ["project"],
+  "limit": 10
+}
+```
+
+| Parameter | Type | Description |
+|---|---|---|
+| `contentQuery` | string | Case-insensitive search inside the stored `contentPreview` (first 500 chars) |
+| `query` | string | Combined with key search |
+| `tags` | string[] | Combined with tag filter |
+| `type` | string | Filter by memory type |
+
+<Note>
+  Content search uses the **first 500 characters** of text stored at write time as the `contentPreview`. 
+  Encrypted and binary content is not indexed for content search.
+</Note>
+
+## Response
+
+Same as [Keyword Search](/api-reference/search/keyword) — returns `{ results, count }`.

@@ -1,0 +1,59 @@
+---
+title: "Versioning"
+description: "Every update creates a new version — full history is always preserved"
+---
+
+## How Versioning Works
+
+Every memory starts at version 1. Each `PUT` update creates a new version:
+
+```
+POST /v1/memory       → v1 created (isLatest: true)
+PUT  /v1/memory/:id   → v2 created (isLatest: true), v1 demoted
+PUT  /v1/memory/:id   → v3 created (isLatest: true), v2+v1 demoted
+```
+
+The default `GET` always returns the latest version. Previous versions are preserved and accessible via history.
+
+## Viewing Version History
+
+```bash
+GET /v1/memory/:id/history
+```
+
+```json
+{
+  "memoryId": "abc-123",
+  "key": "facts/project-stack",
+  "totalVersions": 3,
+  "versions": [
+    { "id": "def-789", "version": 3, "isLatest": true, "createdAt": "..." },
+    { "id": "def-456", "version": 2, "isLatest": false, "createdAt": "..." },
+    { "id": "def-123", "version": 1, "isLatest": false, "createdAt": "..." }
+  ]
+}
+```
+
+## Version Promotion on Delete
+
+When you delete the latest version, the previous version is automatically promoted:
+
+```
+DELETE v3 → v2 becomes isLatest: true
+DELETE v2 → v1 becomes isLatest: true
+DELETE v1 → memory fully removed
+```
+
+## Custom Blob Naming
+
+Control how blobs are named on-chain with `blobFilename` and `blobExtension`:
+
+```json
+{
+  "content": "Q4 Financial Report...",
+  "blobFilename": "quarterly_report",
+  "blobExtension": ".pdf"
+}
+```
+
+Result: `memory/file/docs/report/quarterly_report_v1.pdf`

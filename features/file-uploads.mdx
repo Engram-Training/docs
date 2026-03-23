@@ -1,0 +1,70 @@
+---
+title: "File Uploads"
+description: "Upload and manage binary files — PDFs, images, videos, audio"
+---
+
+## Upload a File
+
+Use multipart/form-data to upload binary files up to **10 MB**:
+
+```bash
+curl -X POST "$API/memory/upload" \
+  -H "Authorization: Bearer $API_KEY" \
+  -F "file=@report.pdf;type=application/pdf" \
+  -F "type=file" \
+  -F "key=docs/quarterly-report" \
+  -F "blobFilename=quarterly_report" \
+  -F "expiresIn=90d" \
+  -F 'metadata={"tags":["report","Q4"],"visibility":"share"}'
+```
+
+## Form Fields
+
+| Field | Required | Description |
+|---|---|---|
+| `file` | ✅ | The binary file (max 10 MB) |
+| `type` | ✅ | Memory type (usually `file`) |
+| `key` | ✅ | Unique key for this memory |
+| `blobFilename` | | Custom name for the blob (e.g. `"quarterly_report"`) |
+| `blobExtension` | | Override file extension (e.g. `".enc"` for encrypted files) |
+| `expiresIn` | | TTL (default `30d`) |
+| `mimeType` | | MIME type hint (auto-detected from upload) |
+| `metadata` | | JSON string with `tags` and `visibility` |
+| `encryptionProvider` | | Set if the file is client-side encrypted |
+| `encryptionMeta` | | JSON string with `iv` and `tag` for encrypted files |
+
+## Download a File
+
+```bash
+# Stream the raw binary
+curl -o report.pdf "$API/memory/:id/download" \
+  -H "Authorization: Bearer $API_KEY"
+
+# JSON response with base64-encoded content
+curl "$API/memory/:id" \
+  -H "Authorization: Bearer $API_KEY"
+```
+
+The `/download` endpoint returns the raw binary with correct `Content-Type` and `Content-Disposition` headers.
+
+The JSON endpoint returns `contentEncoding: "base64"` for binary files.
+
+## Supported Formats
+
+Any file type is supported. Common examples:
+
+| Type | MIME | Typical Use |
+|---|---|---|
+| PDF | `application/pdf` | Documents, reports |
+| JPEG/PNG | `image/jpeg`, `image/png` | Screenshots, diagrams |
+| MP4 | `video/mp4` | Screen recordings |
+| MP3 | `audio/mpeg` | Voice notes |
+| JSON | `application/json` | Config files, exports |
+
+## Encrypted File Uploads
+
+You can encrypt files before uploading — see [Encryption](/features/encryption) for the full workflow.
+
+<Tip>
+  When uploading encrypted files, use `blobExtension=".enc"` to clearly indicate the blob is encrypted on-chain.
+</Tip>

@@ -1,0 +1,54 @@
+---
+title: "Upload File"
+description: "POST /v1/memory/upload — Upload binary files via multipart/form-data"
+---
+
+## Endpoint
+
+```
+POST /v1/memory/upload
+Content-Type: multipart/form-data
+```
+
+## Form Fields
+
+| Field | Required | Description |
+|---|---|---|
+| `file` | ✅ | Binary file (max 10 MB) |
+| `type` | ✅ | Memory type (usually `file`) |
+| `key` | ✅ | Unique key |
+| `blobFilename` | | Custom blob name |
+| `blobExtension` | | Override file extension |
+| `expiresIn` | | TTL (default `30d`) |
+| `mimeType` | | MIME type hint |
+| `metadata` | | JSON string: `{"tags":[],"visibility":"..."}` |
+| `encryptionProvider` | | Set for encrypted uploads |
+| `encryptionMeta` | | JSON: `{"iv":"...","tag":"..."}` |
+
+## Example
+
+```bash
+curl -X POST "$API/memory/upload" \
+  -H "Authorization: Bearer $API_KEY" \
+  -F "file=@video.mp4;type=video/mp4" \
+  -F "type=file" \
+  -F "key=media/demo-video" \
+  -F "blobFilename=demo_recording" \
+  -F "expiresIn=30d" \
+  -F 'metadata={"tags":["video","demo"],"visibility":"share"}'
+```
+
+## Response (201)
+
+```json
+{
+  "id": "...",
+  "type": "file",
+  "key": "media/demo-video",
+  "version": 1,
+  "blobName": "memory/file/media/demo-video/demo_recording_v1.mp4",
+  "sizeBytes": 5185628,
+  "mimeType": "video/mp4",
+  "createdAt": "..."
+}
+```

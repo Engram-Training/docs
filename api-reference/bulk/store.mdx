@@ -1,0 +1,50 @@
+---
+title: "Bulk Store"
+description: "POST /v1/memory/bulk — Store up to 20 memories in one request"
+---
+
+## Endpoint
+
+```
+POST /v1/memory/bulk
+```
+
+## Request Body
+
+```json
+{
+  "memories": [
+    {
+      "type": "semantic",
+      "key": "facts/item-1",
+      "content": "First memory",
+      "importance": 0.8,
+      "expiresIn": "30d",
+      "metadata": { "tags": ["batch"], "visibility": "share" }
+    },
+    {
+      "type": "episodic",
+      "key": "events/item-2",
+      "content": "Second memory",
+      "expiresIn": "7d"
+    }
+  ]
+}
+```
+
+Maximum **20 items** per request. Each item follows the same schema as [Store Memory](/api-reference/memory/store).
+
+## Response (200)
+
+```json
+{
+  "succeeded": 2,
+  "failed": 0,
+  "results": [
+    { "success": true, "id": "...", "key": "facts/item-1" },
+    { "success": true, "id": "...", "key": "events/item-2" }
+  ]
+}
+```
+
+Partial failures are possible — some items may succeed while others fail.

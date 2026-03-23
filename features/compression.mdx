@@ -1,0 +1,39 @@
+---
+title: "Compression"
+description: "Automatic gzip compression for efficient storage"
+---
+
+## How It Works
+
+Text content over **1 KB** is automatically gzip-compressed before writing to Shelby. Decompression is transparent on read.
+
+```
+Write: "2100 chars of text" → gzip → 105 bytes on-chain
+Read:  105 bytes from chain → gunzip → "2100 chars of text"
+```
+
+## When Compression Applies
+
+| Content | Compressed? | Why |
+|---|---|---|
+| Text > 1 KB | ✅ Yes | Significant space savings |
+| Text ≤ 1 KB | ❌ No | Overhead not worth it |
+| Binary files (uploads) | ❌ No | Already compressed (JPEG, MP4, etc.) |
+| Encrypted content | ❌ No | Ciphertext doesn't compress well |
+
+## Response Fields
+
+```json
+{
+  "id": "...",
+  "sizeBytes": 105,
+  "isCompressed": true
+}
+```
+
+- `sizeBytes` — the actual size stored on-chain (after compression)
+- `isCompressed` — `true` if the content was compressed
+
+## Transparent Decompression
+
+You don't need to do anything special — `GET /v1/memory/:id` returns the original uncompressed content regardless of whether it was stored compressed.

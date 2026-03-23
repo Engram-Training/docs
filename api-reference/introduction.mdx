@@ -1,33 +1,88 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: "API Introduction"
+description: "Base URL, authentication, rate limits, and general API conventions"
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+## Base URL
 
-## Welcome
-
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
-
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+```
+https://api.engram.training/v1
+```
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+All requests require a Bearer token:
 
-```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
+```bash
+curl -H "Authorization: Bearer sk_live_your_key_here" \
+  https://api.engram.training/v1/memory
 ```
+
+API keys start with `sk_live_` and are tied to a developer account. Each developer can create multiple agents, each with their own isolated memory space.
+
+## Rate Limits
+
+| Operation | Limit |
+|---|---|
+| Writes (POST, PUT, DELETE) | 60/min |
+| Reads (GET, search) | 300/min |
+
+Exceeding limits returns `429 Too Many Requests`. Rate limits are per API key.
+
+## Response Format
+
+All responses are JSON. Successful operations return the appropriate HTTP status:
+
+| Status | Meaning |
+|---|---|
+| `200` | Success |
+| `201` | Created |
+| `400` | Bad request (invalid parameters) |
+| `401` | Unauthorized (invalid or missing API key) |
+| `404` | Resource not found |
+| `409` | Conflict (duplicate key) |
+| `413` | Payload too large |
+| `422` | Validation error (e.g., credentials in shared content) |
+| `429` | Rate limited |
+| `500` | Server error |
+
+## Pagination
+
+List endpoints support two pagination modes:
+
+### Cursor-based (recommended)
+```bash
+GET /v1/memory?limit=20&cursor=<base64_cursor>
+```
+
+Response includes `nextCursor` and `hasMore`:
+```json
+{
+  "memories": [...],
+  "total": 150,
+  "nextCursor": "base64...",
+  "hasMore": true
+}
+```
+
+### Offset-based
+```bash
+GET /v1/memory?limit=20&offset=40
+```
+
+## SKILL.md Endpoint
+
+Fetch the latest API documentation programmatically:
+
+```bash
+# JSON format
+GET /v1/skill
+
+# Raw markdown
+GET /v1/skill
+Accept: text/markdown
+```
+
+<Tip>
+  Have your agent fetch `/v1/skill` on startup to stay up-to-date with the latest API changes.
+</Tip>

@@ -1,0 +1,38 @@
+---
+title: "SDK Overview"
+description: "Client libraries for integrating Engram into your agent"
+---
+
+## Available SDKs
+
+<CardGroup cols={2}>
+  <Card title="JavaScript / TypeScript" icon="js" href="/sdks/javascript">
+    Full-featured SDK for Node.js and browser environments.
+  </Card>
+  <Card title="Python" icon="python" href="/sdks/python">
+    SDK for Python agents and data pipelines.
+  </Card>
+</CardGroup>
+
+## Direct API Access
+
+If no SDK is available for your language, you can use the REST API directly. The API uses standard HTTP conventions:
+
+- **JSON** request/response bodies
+- **Bearer token** authentication
+- **Standard HTTP methods** (GET, POST, PUT, PATCH, DELETE)
+
+```bash
+curl -H "Authorization: Bearer sk_live_..." \
+  https://api.engram.training/v1/memory
+```
+
+## SKILL.md Auto-Discovery
+
+Every Engram instance serves its full API documentation at:
+
+```bash
+GET /v1/skill
+```
+
+This returns the latest SKILL.md with all endpoints, fields, and changes. AI agents can fetch this on startup to self-discover the API.

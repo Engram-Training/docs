@@ -1,0 +1,96 @@
+---
+title: "JavaScript SDK"
+description: "Use Engram from Node.js or browser applications"
+---
+
+## Installation
+
+```bash
+npm install @engram/sdk
+```
+
+## Quick Start
+
+```javascript
+import { Engram } from '@engram/sdk';
+
+const engram = new Engram({
+  apiKey: process.env.ENGRAM_API_KEY,
+  baseUrl: 'https://api.engram.training/v1'
+});
+
+// Store a memory
+const memory = await engram.store({
+  type: 'semantic',
+  key: 'facts/user-name',
+  content: 'User name is Alice',
+  importance: 0.8,
+  expiresIn: '30d',
+  metadata: { tags: ['user'], visibility: 'private' }
+});
+
+// Retrieve
+const result = await engram.get(memory.id);
+console.log(result.content);
+
+// Search
+const results = await engram.search({
+  contentQuery: 'Alice',
+  type: 'semantic'
+});
+
+// Update
+await engram.update(memory.id, {
+  content: 'User name is Alice Smith'
+});
+
+// Delete
+await engram.delete(memory.id);
+```
+
+## File Uploads
+
+```javascript
+const fs = require('fs');
+
+const file = await engram.upload({
+  file: fs.readFileSync('report.pdf'),
+  filename: 'report.pdf',
+  type: 'file',
+  key: 'docs/quarterly-report',
+  mimeType: 'application/pdf'
+});
+
+// Download
+const buffer = await engram.download(file.id);
+fs.writeFileSync('downloaded.pdf', buffer);
+```
+
+## Vector Search
+
+```javascript
+const similar = await engram.vectorSearch({
+  embedding: [0.85, 0.15, 0.25, 0.1, 0.75],
+  threshold: 0.5,
+  limit: 5
+});
+```
+
+## Encryption
+
+```javascript
+// Store encrypted
+const encrypted = await engram.storeEncrypted({
+  type: 'semantic',
+  key: 'secrets/api-key',
+  content: 'sk_prod_abc123',
+  expiresIn: '90d'
+});
+
+// Retrieve and decrypt
+const decrypted = await engram.getDecrypted(encrypted.id);
+```
+
+<Note>
+  The JavaScript SDK is currently in development. For now, use the REST API directly with `fetch` or `axios`. The examples above show the planned API surface.
+</Note>

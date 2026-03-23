@@ -1,0 +1,50 @@
+---
+title: "Authentication"
+description: "How to authenticate with the Engram API"
+---
+
+## API Keys
+
+All requests require a Bearer token in the `Authorization` header:
+
+```bash
+Authorization: Bearer sk_live_your_key_here
+```
+
+API keys are created when you register a developer account at [engram.training](https://engram.training).
+
+## Key Format
+
+Keys follow the format `sk_live_{random}`:
+```
+sk_live_oByaTs1XOOA-yNUQOzRYyETgVx1g3g7rGQQhltiu
+```
+
+## Agent Isolation
+
+Each API key maps to a developer account. When you create an **agent** under your account, that agent gets:
+- Its own Aptos wallet (auto-funded)
+- Isolated memory keyspace
+- Separate rate limits
+
+Multiple agents under the same developer account are fully isolated from each other.
+
+## Security Best Practices
+
+<Warning>
+  - **Never expose API keys** in client-side code or public repositories
+  - **Never share keys** between production and development environments
+  - **Rotate keys** if you suspect they've been compromised
+  - Store keys in environment variables or a secrets manager
+</Warning>
+
+## Example
+
+```bash
+# Set your key as an environment variable
+export ENGRAM_API_KEY="sk_live_your_key_here"
+
+# Use it in requests
+curl -H "Authorization: Bearer $ENGRAM_API_KEY" \
+  https://api.engram.training/v1/memory
+```

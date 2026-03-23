@@ -1,0 +1,49 @@
+---
+title: "Keyword Search"
+description: "POST /v1/memory/search — Search by key name and tags"
+---
+
+## Endpoint
+
+```
+POST /v1/memory/search
+```
+
+## Request Body
+
+```json
+{
+  "query": "facts/",
+  "type": "semantic",
+  "tags": ["architecture"],
+  "limit": 10
+}
+```
+
+| Parameter | Type | Description |
+|---|---|---|
+| `query` | string | Case-insensitive substring match on `key` |
+| `type` | string | Filter by memory type |
+| `tags` | string[] | Filter by metadata tags (matches any) |
+| `limit` | number | Max results (default 10, max 50) |
+
+## Response (200)
+
+```json
+{
+  "results": [
+    {
+      "id": "...",
+      "type": "semantic",
+      "key": "facts/project-alpha",
+      "version": 1,
+      "sizeBytes": 42,
+      "pinned": false,
+      "importance": 0.8,
+      "metadata": { "tags": ["architecture"] },
+      "createdAt": "..."
+    }
+  ],
+  "count": 1
+}
+```

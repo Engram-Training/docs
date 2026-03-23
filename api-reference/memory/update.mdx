@@ -1,0 +1,68 @@
+---
+title: "Update Memory"
+description: "PUT /v1/memory/:id — Create a new version of an existing memory"
+---
+
+## Endpoint
+
+```
+PUT /v1/memory/:id
+```
+
+## Request Body
+
+```json
+{
+  "content": "Updated content for version 2.",
+  "expiresIn": "60d",
+  "blobFilename": "updated_report",
+  "blobExtension": ".pdf"
+}
+```
+
+All fields are optional — only include what you want to change.
+
+## Parameters
+
+| Field | Type | Description |
+|---|---|---|
+| `content` | string | New content (creates a new version) |
+| `expiresIn` | string | New TTL |
+| `metadata` | object | Updated tags/visibility |
+| `embedding` | number[] | Updated embedding vector |
+| `blobFilename` | string | New blob filename |
+| `blobExtension` | string | New file extension |
+| `encryptionProvider` | string | Encryption provider |
+| `encryptionMeta` | object | Updated encryption metadata |
+
+## Response (200)
+
+```json
+{
+  "id": "new-version-uuid",
+  "type": "semantic",
+  "key": "facts/project-alpha",
+  "version": 2,
+  "blobName": "memory/semantic/facts/project-alpha/v2",
+  "sizeBytes": 48,
+  "createdAt": "2026-03-23T20:00:00.000Z"
+}
+```
+
+## Version History
+
+After updating, view all versions:
+
+```
+GET /v1/memory/:id/history
+```
+
+```json
+{
+  "totalVersions": 2,
+  "versions": [
+    { "version": 2, "isLatest": true, "createdAt": "..." },
+    { "version": 1, "isLatest": false, "createdAt": "..." }
+  ]
+}
+```
