@@ -34,14 +34,6 @@
               "features/compression",
               "features/audit-trail"
             ]
-          },
-          {
-            "group": "Architecture",
-            "pages": [
-              "architecture/overview",
-              "architecture/shelby-protocol",
-              "architecture/auto-funding"
-            ]
           }
         ]
       },
