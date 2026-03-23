@@ -1,0 +1,109 @@
+---
+title: "Core Concepts"
+description: "Understand how Engram stores, versions, and manages agent memories"
+---
+
+## Memory Model
+
+Every memory in Engram is a **MemoryEntry** — a versioned, typed record stored on the Aptos blockchain via Shelby Protocol.
+
+```
+┌─────────────────────────────────────────────────┐
+│  MemoryEntry                                     │
+│  ├── id          (UUID)                          │
+│  ├── type        (semantic, episodic, file...)   │
+│  ├── key         (unique per agent+type)         │
+│  ├── content     (stored as Shelby blob)         │
+│  ├── version     (auto-incremented)              │
+│  ├── pinned      (immune to TTL cleanup)         │
+│  ├── importance  (0.0 – 1.0)                     │
+│  ├── metadata    (tags, visibility)              │
+│  ├── embedding   (float[] for vector search)     │
+│  ├── expiresAt   (TTL auto-cleanup)              │
+│  └── isCompressed (gzip for text > 1KB)          │
+└─────────────────────────────────────────────────┘
+```
+
+## Key Hierarchy
+
+Memories are scoped by **agent → type → key**:
+
+```
+Agent (sk_live_xxx)
+  └── semantic/
+  │     ├── facts/user-name       (v1, v2, v3)
+  │     └── facts/project-stack   (v1)
+  └── episodic/
+  │     └── conversation/2026-03-23  (v1)
+  └── file/
+        └── docs/report.pdf       (v1, v2)
+```
+
+- Each agent has its own isolated keyspace
+- Keys are unique within a type — posting the same key returns `409`
+- Use `PUT` to create a new version of an existing key
+
+## Versioning
+
+Every `PUT` creates a new version. The latest version is the default for reads.
+
+```
+POST facts/stack → v1 (isLatest: true)
+PUT  facts/stack → v2 (isLatest: true), v1 (isLatest: false)
+PUT  facts/stack → v3 (isLatest: true), v2+v1 (isLatest: false)
+```
+
+**Deleting the latest version promotes the previous one:**
+```
+DELETE v3 → v2 becomes isLatest: true
+```
+
+## Visibility
+
+| Value | Behavior |
+|---|---|
+| `private` | Encrypted at rest. Only the owning agent can read. Default. |
+| `share` | Stored unencrypted. Accessible for cross-agent sharing (future). |
+
+<Warning>
+  Content containing API keys, private keys, or secrets **must** use `visibility: "private"`. 
+  Shared content with detected credentials is rejected with `422`.
+</Warning>
+
+## TTL & Expiry
+
+Every memory has a time-to-live (TTL). When it expires, the background cleaner deletes the Shelby blob and marks the entry as `expired`.
+
+| Format | Example | Duration |
+|---|---|---|
+| Seconds | `30s` | 30 seconds |
+| Minutes | `15m` | 15 minutes |
+| Hours | `6h` | 6 hours |
+| Days | `30d` | 30 days |
+
+**Default TTL:** `30d`
+
+**Pinned memories** (`pinned: true`) are immune to TTL cleanup — they never auto-expire regardless of `expiresAt`.
+
+## Storage Flow
+
+```
+Agent → Engram API → Shelby Protocol → Aptos Blockchain
+         │                                    │
+         ├── Metadata (Postgres)               │
+         └── Content (Shelby blob) ────────────┘
+```
+
+1. Agent sends content to the Engram API
+2. Engram writes the content as a **Shelby blob** on-chain
+3. Metadata (type, key, version, tags, etc.) is stored in **PostgreSQL**
+4. On read, metadata is fetched from Postgres, content is fetched from Shelby
+
+## Rate Limits
+
+| Operation | Limit |
+|---|---|
+| Writes (POST, PUT, DELETE) | 60/min |
+| Reads (GET, search) | 300/min |
+
+Rate limits are per API key. Exceeding limits returns `429 Too Many Requests`.

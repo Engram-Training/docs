@@ -1,0 +1,86 @@
+---
+title: "Encryption"
+description: "Encrypt memories with AES-256-GCM for end-to-end privacy"
+---
+
+## Overview
+
+Engram supports **client-side encryption** — you encrypt content before sending it to the API. The server never sees your plaintext. Encrypted content is stored as-is on the Shelby blockchain.
+
+## Encryption Flow
+
+```
+Agent → Encrypt (AES-256-GCM) → API → Shelby Blob (encrypted)
+Agent ← Decrypt (AES-256-GCM) ← API ← Shelby Blob (encrypted)
+```
+
+## Storing Encrypted Content
+
+1. Encrypt the content locally
+2. Send the ciphertext + encryption metadata to the API
+
+```javascript
+const crypto = require('crypto');
+
+// Derive key from API key (or use your own key management)
+const encKey = crypto.createHash('sha256').update(API_KEY).digest();
+const iv = crypto.randomBytes(12);
+const cipher = crypto.createCipheriv('aes-256-gcm', encKey, iv);
+
+const encrypted = Buffer.concat([
+  cipher.update('My secret data', 'utf8'),
+  cipher.final()
+]);
+const authTag = cipher.getAuthTag();
+```
+
+```bash
+curl -X POST "$API/memory" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "semantic",
+    "key": "secrets/db-password",
+    "content": "<base64-ciphertext>",
+    "encryptionProvider": "engram-aes-256-gcm",
+    "encryptionMeta": {
+      "iv": "<hex-iv>",
+      "tag": "<hex-auth-tag>"
+    },
+    "metadata": { "visibility": "private" }
+  }'
+```
+
+## Retrieving & Decrypting
+
+The response includes `encryptionProvider` and `encryptionMeta`:
+
+```javascript
+const decipher = crypto.createDecipheriv('aes-256-gcm', encKey, 
+  Buffer.from(response.encryptionMeta.iv, 'hex'));
+decipher.setAuthTag(Buffer.from(response.encryptionMeta.tag, 'hex'));
+
+const decrypted = decipher.update(
+  Buffer.from(response.content, 'base64')
+) + decipher.final('utf8');
+```
+
+## Encrypted File Uploads
+
+Binary files (video, images, PDFs) can also be encrypted:
+
+1. Read the file as a buffer
+2. Encrypt the entire buffer with AES-256-GCM
+3. Upload the encrypted bytes
+4. Download and decrypt to get the original file
+
+<Warning>
+  Encrypted content is **not indexed** for content search. The `contentPreview` field is left empty for encrypted memories.
+</Warning>
+
+## Important Notes
+
+- **Compression is skipped** for encrypted content (compressed ciphertext would be larger)
+- `visibility` should be `"private"` for encrypted content
+- Content with detected credentials (API keys, passwords) in `"share"` mode is rejected with `422`
+- The `encryptionMeta` is stored in the database (not encrypted) so you can retrieve the IV and auth tag for decryption

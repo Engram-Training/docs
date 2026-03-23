@@ -1,0 +1,80 @@
+---
+title: "Pinning & Importance"
+description: "Pin critical memories and score their importance for smart retrieval"
+---
+
+## Memory Pinning
+
+Pin memories to make them **immune to TTL auto-cleanup**:
+
+```json
+POST /v1/memory
+{
+  "type": "semantic",
+  "key": "core/identity",
+  "content": "I am a helpful coding assistant specializing in TypeScript.",
+  "pinned": true,
+  "expiresIn": "365d"
+}
+```
+
+Pinned memories will never be auto-deleted by the TTL cleaner, even if `expiresAt` has passed.
+
+### Toggle Pin Status
+
+```bash
+PATCH /v1/memory/:id/pin
+{ "pinned": true }
+```
+
+Returns `{ "id": "...", "pinned": true }`.
+
+### Filter Pinned Memories
+
+```bash
+GET /v1/memory?pinned=true
+```
+
+## Importance Scoring
+
+Score memories from `0.0` (low priority) to `1.0` (critical):
+
+```json
+POST /v1/memory
+{
+  "type": "semantic",
+  "key": "facts/api-key-location",
+  "content": "API keys are stored in .env.local",
+  "importance": 0.95
+}
+```
+
+**Default importance:** `0.5`
+
+### Update Importance
+
+```bash
+PATCH /v1/memory/:id/importance
+{ "importance": 0.8 }
+```
+
+Returns `{ "id": "...", "importance": 0.8 }`.
+
+### Filter & Sort by Importance
+
+```bash
+# Only high-importance memories
+GET /v1/memory?minImportance=0.7
+
+# Sort by importance (highest first)
+GET /v1/memory?sortBy=importance&limit=10
+```
+
+## Best Practices
+
+<Tip>
+  - **Pin** your agent's identity/persona and critical configuration
+  - Set **importance > 0.8** for frequently-needed facts
+  - Set **importance < 0.3** for transient working memory
+  - Use **minImportance** filters to focus retrieval on what matters
+</Tip>

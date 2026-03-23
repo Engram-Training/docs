@@ -1,0 +1,70 @@
+---
+title: "Error Handling"
+description: "Error codes and troubleshooting"
+---
+
+## Error Response Format
+
+All errors return a JSON body:
+
+```json
+{
+  "error": "Memory key already exists. Use PUT /v1/memory/:id to create a new version.",
+  "existingId": "abc-123"
+}
+```
+
+## Common Error Codes
+
+| Status | Error | Solution |
+|---|---|---|
+| `400` | Invalid parameters | Check required fields, valid `expiresIn` format |
+| `401` | `Unauthorized` | Verify your API key is correct |
+| `404` | `Memory not found` | Check the memory ID exists and belongs to your agent |
+| `409` | `Memory key already exists` | Use `PUT /v1/memory/:id` to update, or choose a different key |
+| `413` | `File too large` | Max blob size is 10 MB |
+| `413` | `Storage quota exceeded` | Delete unused memories or request a quota increase |
+| `422` | `Credential detected in shared content` | Set `visibility: "private"` for content with secrets |
+| `429` | `Rate limited` | Wait and retry. Writes: 60/min, Reads: 300/min |
+
+## Retry Strategy
+
+For `429` and `5xx` errors, implement exponential backoff:
+
+```javascript
+async function withRetry(fn, maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (err.status === 429 || err.status >= 500) {
+        await sleep(Math.pow(2, i) * 1000);
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+```
+
+## Validation Errors
+
+The `400` status includes details about what's wrong:
+
+```json
+{
+  "error": "Invalid expiresIn format. Use e.g. \"1h\", \"24h\", \"30d\". Minimum 10 seconds."
+}
+```
+
+```json
+{
+  "error": "Missing required fields: type and key are required"
+}
+```
+
+```json
+{
+  "error": "importance must be a number between 0 and 1"
+}
+```

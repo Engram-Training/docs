@@ -1,0 +1,61 @@
+---
+title: "List Memories"
+description: "GET /v1/memory — List memories with filtering, sorting, and cursor pagination"
+---
+
+## Endpoint
+
+```
+GET /v1/memory
+```
+
+## Query Parameters
+
+| Parameter | Type | Description |
+|---|---|---|
+| `type` | string | Filter by memory type |
+| `pinned` | boolean | Filter by pin status |
+| `minImportance` | number | Minimum importance (0.0–1.0) |
+| `sortBy` | string | `importance` or default (createdAt desc) |
+| `limit` | number | Results per page (default 20, max 50) |
+| `offset` | number | Offset for traditional pagination |
+| `cursor` | string | Cursor for cursor-based pagination |
+
+## Response (200)
+
+```json
+{
+  "memories": [
+    {
+      "id": "...",
+      "type": "semantic",
+      "key": "facts/project-alpha",
+      "version": 2,
+      "sizeBytes": 48,
+      "pinned": true,
+      "importance": 0.8,
+      "metadata": { "tags": ["project"] },
+      "visibility": "private",
+      "createdAt": "...",
+      "updatedAt": "..."
+    }
+  ],
+  "total": 150,
+  "limit": 20,
+  "offset": 0,
+  "nextCursor": "base64...",
+  "hasMore": true
+}
+```
+
+## Cursor Pagination
+
+Pass `nextCursor` from the response as `cursor` in the next request for stable pagination:
+
+```bash
+# Page 1
+GET /v1/memory?limit=20
+
+# Page 2
+GET /v1/memory?limit=20&cursor=<nextCursor>
+```

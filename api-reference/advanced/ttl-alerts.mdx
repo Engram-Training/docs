@@ -1,0 +1,39 @@
+---
+title: "TTL Alerts"
+description: "POST /v1/memory/ttl-alerts — Get expiry alerts and renew TTLs"
+---
+
+## Endpoint
+
+```
+POST /v1/memory/ttl-alerts
+```
+
+## Request Body
+
+```json
+{
+  "within": "24h",
+  "type": "semantic",
+  "renewIds": ["id1", "id2"],
+  "renewDuration": "30d"
+}
+```
+
+| Parameter | Type | Description |
+|---|---|---|
+| `within` | string | Alert window (e.g. `1h`, `24h`, `7d`) |
+| `type` | string | Filter by type |
+| `renewIds` | string[] | IDs to renew |
+| `renewDuration` | string | New TTL for renewed memories |
+
+## Response (200)
+
+```json
+{
+  "expiringCount": 5,
+  "expiringMemories": [...],
+  "renewed": 2,
+  "renewedIds": ["id1", "id2"]
+}
+```

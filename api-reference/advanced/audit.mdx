@@ -1,0 +1,39 @@
+---
+title: "Audit Logs"
+description: "GET /v1/memory/audit — View operation logs for your agent"
+---
+
+## Endpoint
+
+```
+GET /v1/memory/audit
+```
+
+## Query Parameters
+
+| Parameter | Type | Description |
+|---|---|---|
+| `action` | string | Filter: `read`, `write`, `delete`, `search`, `list`, `upload`, `pin`, `importance` |
+| `limit` | number | Max results (default 50, max 100) |
+| `cursor` | string | Cursor for pagination |
+
+## Response (200)
+
+```json
+{
+  "logs": [
+    {
+      "id": "log-uuid",
+      "agentId": "agent-uuid",
+      "memoryId": "memory-uuid",
+      "action": "write",
+      "detail": "key: facts/project-stack",
+      "ipAddress": "127.0.0.1",
+      "createdAt": "2026-03-23T19:29:58.023Z"
+    }
+  ],
+  "count": 50,
+  "hasMore": true,
+  "nextCursor": "base64-cursor"
+}
+```

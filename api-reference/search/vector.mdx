@@ -1,0 +1,47 @@
+---
+title: "Vector Search"
+description: "POST /v1/memory/vector-search — Semantic similarity search with embeddings"
+---
+
+## Endpoint
+
+```
+POST /v1/memory/vector-search
+```
+
+## Request Body
+
+```json
+{
+  "embedding": [0.85, 0.15, 0.25, 0.1, 0.75],
+  "threshold": 0.5,
+  "type": "embedding",
+  "limit": 5
+}
+```
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `embedding` | number[] | ✅ | Query vector (must match stored dimension) |
+| `threshold` | number | | Minimum cosine similarity (default 0.0) |
+| `type` | string | | Filter by memory type |
+| `limit` | number | | Max results (default 10) |
+
+## Response (200)
+
+```json
+{
+  "results": [
+    {
+      "id": "...",
+      "key": "facts/blockchain",
+      "score": 0.9965,
+      "content": "Blockchain provides decentralized storage",
+      "metadata": { "tags": ["tech"] }
+    }
+  ],
+  "count": 1
+}
+```
+
+Results are sorted by `score` (highest first). The score is the cosine similarity between the query embedding and the stored embedding.

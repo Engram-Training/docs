@@ -1,0 +1,65 @@
+---
+title: "Audit Trail"
+description: "Track every read, write, delete, and search operation"
+---
+
+## Overview
+
+Every operation is logged automatically. Use the audit trail to track agent behavior, debug issues, and monitor usage.
+
+## Viewing Audit Logs
+
+```bash
+GET /v1/memory/audit?action=write&limit=10
+```
+
+```json
+{
+  "logs": [
+    {
+      "id": "log-uuid",
+      "agentId": "agent-uuid",
+      "memoryId": "memory-uuid",
+      "action": "write",
+      "detail": "key: facts/project-stack",
+      "createdAt": "2026-03-23T19:29:58.023Z"
+    }
+  ],
+  "count": 10,
+  "hasMore": true,
+  "nextCursor": "base64-cursor-string"
+}
+```
+
+## Logged Actions
+
+| Action | When |
+|---|---|
+| `write` | Memory stored (POST) |
+| `read` | Memory retrieved (GET) |
+| `delete` | Memory deleted (DELETE) |
+| `search` | Search performed |
+| `list` | Memories listed |
+| `upload` | File uploaded |
+| `pin` | Pin status toggled |
+| `importance` | Importance score updated |
+
+## Filtering
+
+| Parameter | Description |
+|---|---|
+| `action` | Filter by action type |
+| `limit` | Max results (default 50, max 100) |
+| `cursor` | Cursor for pagination |
+
+## Cursor Pagination
+
+Use `nextCursor` from the response to page through results:
+
+```bash
+# Page 1
+GET /v1/memory/audit?limit=20
+
+# Page 2
+GET /v1/memory/audit?limit=20&cursor=<nextCursor from page 1>
+```

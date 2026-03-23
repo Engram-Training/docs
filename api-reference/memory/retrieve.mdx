@@ -1,0 +1,63 @@
+---
+title: "Retrieve Memory"
+description: "GET /v1/memory/:id — Get a memory by ID with full content"
+---
+
+## Endpoint
+
+```
+GET /v1/memory/:id
+```
+
+## Response (200)
+
+```json
+{
+  "id": "7cf4b433-4bb2-4522-980e-ad3ee4f270b9",
+  "type": "semantic",
+  "key": "facts/project-alpha",
+  "content": "Project Alpha uses Rust for the backend.",
+  "version": 1,
+  "pinned": false,
+  "importance": 0.8,
+  "sizeBytes": 42,
+  "mimeType": null,
+  "metadata": { "tags": ["project"], "visibility": "private" },
+  "visibility": "private",
+  "createdAt": "2026-03-23T19:29:58.023Z",
+  "updatedAt": "2026-03-23T19:29:58.023Z",
+  "expiresAt": "2026-04-22T19:29:58.023Z"
+}
+```
+
+### Binary Content
+
+For file uploads, content is returned as base64:
+
+```json
+{
+  "content": "JVBERi0xLjQK...",
+  "contentEncoding": "base64",
+  "mimeType": "application/pdf"
+}
+```
+
+### Compressed Content
+
+Compressed content is automatically decompressed — the response always contains the original text.
+
+## Download Endpoint
+
+For raw binary downloads:
+
+```
+GET /v1/memory/:id/download
+```
+
+Returns the raw file with correct `Content-Type` and `Content-Disposition` headers.
+
+## Errors
+
+| Status | Reason |
+|---|---|
+| `404` | Memory not found or doesn't belong to your agent |

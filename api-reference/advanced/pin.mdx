@@ -1,0 +1,29 @@
+---
+title: "Pin Memory"
+description: "PATCH /v1/memory/:id/pin — Toggle pin status"
+---
+
+## Endpoint
+
+```
+PATCH /v1/memory/:id/pin
+```
+
+## Request Body
+
+```json
+{ "pinned": true }
+```
+
+## Response (200)
+
+```json
+{ "id": "7cf4b433-...", "pinned": true }
+```
+
+## Errors
+
+| Status | Reason |
+|---|---|
+| `400` | `pinned` must be a boolean |
+| `404` | Memory not found |

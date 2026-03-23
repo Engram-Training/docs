@@ -1,0 +1,31 @@
+---
+title: "Set Importance"
+description: "PATCH /v1/memory/:id/importance — Update importance score"
+---
+
+## Endpoint
+
+```
+PATCH /v1/memory/:id/importance
+```
+
+## Request Body
+
+```json
+{ "importance": 0.8 }
+```
+
+Value must be between `0.0` and `1.0`.
+
+## Response (200)
+
+```json
+{ "id": "7cf4b433-...", "importance": 0.8 }
+```
+
+## Errors
+
+| Status | Reason |
+|---|---|
+| `400` | `importance` must be a number between 0 and 1 |
+| `404` | Memory not found |

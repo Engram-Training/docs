@@ -1,0 +1,73 @@
+---
+title: "Store Memory"
+description: "POST /v1/memory — Create a new memory entry"
+---
+
+## Endpoint
+
+```
+POST /v1/memory
+```
+
+## Request Body
+
+```json
+{
+  "type": "semantic",
+  "key": "facts/project-alpha",
+  "content": "Project Alpha uses Rust for the backend.",
+  "pinned": false,
+  "importance": 0.8,
+  "expiresIn": "30d",
+  "embedding": [0.1, 0.2, 0.3],
+  "metadata": {
+    "tags": ["project", "architecture"],
+    "visibility": "private"
+  }
+}
+```
+
+## Parameters
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `type` | string | ✅ | Built-in type or `custom:*` |
+| `key` | string | ✅ | Unique key within this type |
+| `content` | string | ✅ | The memory content (max 10 MB) |
+| `expiresIn` | string | | TTL: `{n}{unit}`. Default: `30d` |
+| `pinned` | boolean | | Immune to TTL cleanup. Default: `false` |
+| `importance` | number | | `0.0`–`1.0`. Default: `0.5` |
+| `embedding` | number[] | | Float array for vector search |
+| `metadata` | object | | `tags` (string[]) and `visibility` |
+| `blobFilename` | string | | Custom blob name |
+| `blobExtension` | string | | File extension (e.g. `".pdf"`) |
+| `mimeType` | string | | MIME type for binary content |
+| `encryptionProvider` | string | | e.g. `"engram-aes-256-gcm"` |
+| `encryptionMeta` | object | | `{ iv, tag }` for encrypted content |
+
+## Response (201)
+
+```json
+{
+  "id": "7cf4b433-4bb2-4522-980e-ad3ee4f270b9",
+  "type": "semantic",
+  "key": "facts/project-alpha",
+  "version": 1,
+  "blobName": "memory/semantic/facts/project-alpha/v1",
+  "sizeBytes": 42,
+  "pinned": false,
+  "importance": 0.8,
+  "isCompressed": false,
+  "encryptionProvider": null,
+  "createdAt": "2026-03-23T19:29:58.023Z"
+}
+```
+
+## Errors
+
+| Status | Reason |
+|---|---|
+| `400` | Missing/invalid fields |
+| `409` | Key already exists (use PUT to update) |
+| `413` | Content too large or quota exceeded |
+| `422` | Credentials detected in shared content |

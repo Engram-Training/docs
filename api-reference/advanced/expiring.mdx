@@ -1,0 +1,39 @@
+---
+title: "Expiring Memories"
+description: "GET /v1/memory/expiring — List memories about to expire"
+---
+
+## Endpoint
+
+```
+GET /v1/memory/expiring
+```
+
+## Query Parameters
+
+| Parameter | Type | Description |
+|---|---|---|
+| `within` | string | Time window (e.g. `1h`, `6h`, `24h`, `7d`). Default: `24h` |
+| `type` | string | Filter by memory type |
+
+## Response (200)
+
+```json
+{
+  "memories": [
+    {
+      "id": "...",
+      "key": "facts/temp-data",
+      "type": "working",
+      "expiresAt": "2026-03-23T21:00:00.000Z",
+      "pinned": false
+    }
+  ],
+  "count": 5,
+  "within": "24h"
+}
+```
+
+<Tip>
+  Poll this endpoint periodically and use [TTL Alerts](/api-reference/advanced/ttl-alerts) to renew important memories before they expire.
+</Tip>
