@@ -5,7 +5,7 @@ description: "Automatic gzip compression for efficient storage"
 
 ## How It Works
 
-Text content over **1 KB** is automatically gzip-compressed before writing to Shelby. Decompression is transparent on read.
+Text content over **10 KB** is automatically gzip-compressed before writing to Shelby. Decompression is transparent on read.
 
 ```
 Write: "2100 chars of text" → gzip → 105 bytes on-chain
@@ -16,8 +16,8 @@ Read:  105 bytes from chain → gunzip → "2100 chars of text"
 
 | Content | Compressed? | Why |
 |---|---|---|
-| Text > 1 KB | ✅ Yes | Significant space savings |
-| Text ≤ 1 KB | ❌ No | Overhead not worth it |
+| Text > 10 KB | ✅ Yes | Significant space savings |
+| Text ≤ 10 KB | ❌ No | Overhead not worth it |
 | Binary files (uploads) | ❌ No | Already compressed (JPEG, MP4, etc.) |
 | Encrypted content | ❌ No | Ciphertext doesn't compress well |
 

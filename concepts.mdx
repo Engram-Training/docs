@@ -20,7 +20,7 @@ Every memory in Engram is a **MemoryEntry** — a versioned, typed record stored
 │  ├── metadata    (tags, visibility)              │
 │  ├── embedding   (float[] for vector search)     │
 │  ├── expiresAt   (TTL auto-cleanup)              │
-│  └── isCompressed (gzip for text > 1KB)          │
+│  └── isCompressed (gzip for text > 10 KB)         │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -99,11 +99,26 @@ Agent → Engram API → Shelby Protocol → Aptos Blockchain
 3. Metadata (type, key, version, tags, etc.) is stored in **PostgreSQL**
 4. On read, metadata is fetched from Postgres, content is fetched from Shelby
 
+## Sponsored Transactions
+
+All on-chain storage operations are **fully sponsored** — agents operate with zero balance:
+
+| Fee | Paid By |
+|---|---|
+| ShelbyUSD (storage costs) | Platform wallet |
+| APT (gas fees) | Shinami gas station |
+
+Agents never need funding. The platform wallet covers ShelbyUSD storage costs, and the Shinami gas station covers APT transaction fees. This is why per-agent rate limiting exists — to protect the platform wallet from being drained.
+
 ## Rate Limits
 
 | Operation | Limit |
 |---|---|
-| Writes (POST, PUT, DELETE) | 60/min |
-| Reads (GET, search) | 300/min |
+| Writes (POST, PUT, DELETE) | 30/min per agent |
+| Reads (GET, search) | Unlimited |
 
-Rate limits are per API key. Exceeding limits returns `429 Too Many Requests`.
+Rate limits are per agent API key. Exceeding limits returns `429 Too Many Requests`.
+
+<Tip>
+  Rate limits protect the platform wallet that sponsors all storage transaction fees. Configure limits via `RATE_LIMIT_WINDOW_MS` and `RATE_LIMIT_MAX_OPS` environment variables.
+</Tip>

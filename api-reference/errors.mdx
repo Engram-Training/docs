@@ -25,7 +25,7 @@ All errors return a JSON body:
 | `413` | `File too large` | Max blob size is 10 MB |
 | `413` | `Storage quota exceeded` | Delete unused memories or request a quota increase |
 | `422` | `Credential detected in shared content` | Set `visibility: "private"` for content with secrets |
-| `429` | `Rate limited` | Wait and retry. Writes: 60/min, Reads: 300/min |
+| `429` | `Rate limited` | Wait and retry. Writes: 30/min per agent. Reads: unlimited |
 
 ## Retry Strategy
 
