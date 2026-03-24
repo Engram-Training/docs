@@ -99,17 +99,6 @@ Agent → Engram API → Shelby Protocol → Aptos Blockchain
 3. Metadata (type, key, version, tags, etc.) is stored in **PostgreSQL**
 4. On read, metadata is fetched from Postgres, content is fetched from Shelby
 
-## Sponsored Transactions
-
-All on-chain storage operations are **fully sponsored** — agents operate with zero balance:
-
-| Fee | Paid By |
-|---|---|
-| ShelbyUSD (storage costs) | Platform wallet |
-| APT (gas fees) | Shinami gas station |
-
-Agents never need funding. The platform wallet covers ShelbyUSD storage costs, and the Shinami gas station covers APT transaction fees. This is why per-agent rate limiting exists — to protect the platform wallet from being drained.
-
 ## Rate Limits
 
 | Operation | Limit |
