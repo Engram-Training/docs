@@ -74,9 +74,9 @@ Binary files (video, images, PDFs) can also be encrypted:
 3. Upload the encrypted bytes
 4. Download and decrypt to get the original file
 
-<Warning>
-  Encrypted content is **not indexed** for content search. The `contentPreview` field is left empty for encrypted memories.
-</Warning>
+<Note>
+  Encrypted content is **not indexed** for content search. However, encrypted memories are still discoverable via **key search**, **tag search**, **type filtering**, and **vector search** (embeddings are stored unencrypted). Use descriptive keys and tags at write time so agents can locate encrypted content without needing to search the body.
+</Note>
 
 ## Important Notes
 
