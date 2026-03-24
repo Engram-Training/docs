@@ -1,0 +1,46 @@
+---
+title: "Delete Media"
+description: "DELETE /v1/media/:id — Delete a media file"
+---
+
+## Endpoint
+
+```
+DELETE /v1/media/:id
+Authorization: Bearer sk_live_...
+```
+
+Deletes the blob from the Shelby network and removes the database record.
+
+## Path Parameters
+
+| Param | Description |
+|---|---|
+| `id` | Media file UUID |
+
+## Example
+
+```bash
+curl -X DELETE "$API/v1/media/$ID" \
+  -H "Authorization: Bearer $API_KEY"
+```
+
+## Response (200)
+
+```json
+{
+  "deleted": true,
+  "id": "3449d148-5cc5-4bcc-9e02-242398025dc2"
+}
+```
+
+<Note>
+  If the blob has already expired on the Shelby network, the delete still succeeds —
+  the database record is removed even if the underlying blob no longer exists.
+</Note>
+
+## Errors
+
+| Status | Reason |
+|---|---|
+| `404` | Media not found |

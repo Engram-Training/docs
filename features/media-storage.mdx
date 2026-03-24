@@ -1,0 +1,101 @@
+---
+title: "Media Storage"
+description: "Store and stream images, videos, audio, and documents with auto-categorization"
+---
+
+Engram's Media API provides a dedicated file storage layer separate from the memory system. Files are stored on the Shelby network with auto-categorization, CDN streaming, and HTTP Range support.
+
+## How It Works
+
+1. **Upload** a file via multipart form-data
+2. Engram **auto-categorizes** it by MIME type (`photo`, `video`, `audio`, `document`)
+3. The file is **stored on Shelby** with a unique blob name
+4. **Stream** it back with full Range request support (video/audio seeking)
+
+## Categories
+
+| MIME Prefix | Category | Examples |
+|---|---|---|
+| `image/*` | `photo` | JPEG, PNG, WebP, SVG |
+| `video/*` | `video` | MP4, WebM, MOV |
+| `audio/*` | `audio` | MP3, WAV, OGG |
+| Everything else | `document` | PDF, TXT, ZIP |
+
+## Quick Start
+
+### Upload
+
+```bash
+curl -X POST "$API/v1/media/upload" \
+  -H "Authorization: Bearer $API_KEY" \
+  -F "file=@photo.jpg" \
+  -F "expiresIn=90d" \
+  -F "title=Profile Photo"
+```
+
+### List
+
+```bash
+# All media
+curl "$API/v1/media" -H "Authorization: Bearer $API_KEY"
+
+# Only photos
+curl "$API/v1/media?category=photo" -H "Authorization: Bearer $API_KEY"
+```
+
+### Stream
+
+```bash
+# Download
+curl -o photo.jpg "$API/v1/media/$ID/stream" \
+  -H "Authorization: Bearer $API_KEY"
+
+# Range request for video seeking
+curl -H "Range: bytes=0-1024" "$API/v1/media/$ID/stream" \
+  -H "Authorization: Bearer $API_KEY"
+```
+
+### Delete
+
+```bash
+curl -X DELETE "$API/v1/media/$ID" -H "Authorization: Bearer $API_KEY"
+```
+
+## Media vs Memory Uploads
+
+| Feature | Media API (`/v1/media`) | Memory Upload (`/v1/memory/upload`) |
+|---|---|---|
+| **Purpose** | Standalone file storage | File-backed memories |
+| **Categories** | Auto-categorized | User-defined `type` |
+| **Versioning** | No | Yes (PUT creates versions) |
+| **Search** | Not indexed | Searchable by key/tags |
+| **Streaming** | ✅ Range support | Download only |
+| **Auth** | API key | API key |
+
+<Tip>
+  Use the **Media API** for standalone files (images, videos, documents) that
+  need streaming. Use **Memory Upload** for files that should be part of the
+  memory system with versioning and search.
+</Tip>
+
+## CDN Direct Access
+
+For frequently accessed public files, bypass the API and use the Shelby CDN directly:
+
+```
+https://api.testnet.shelby.xyz/shelby/v1/blobs/{aptosAddress}/{blobName}
+```
+
+This is especially useful for embedding images and videos in web pages.
+
+## TTL and Expiration
+
+Media files follow the same TTL rules as memories. Set `expiresIn` during upload:
+
+| Duration | Use Case |
+|---|---|
+| `1h` | Temporary previews |
+| `7d` | Weekly reports |
+| `30d` | Monthly content |
+| `90d` | Long-term storage (default) |
+| `365d` | Annual archives |
