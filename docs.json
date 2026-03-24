@@ -17,6 +17,7 @@
             "group": "Getting Started",
             "pages": [
               "index",
+              "why-stateless",
               "quickstart",
               "concepts"
             ]
