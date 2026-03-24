@@ -1,0 +1,52 @@
+---
+title: "List Media"
+description: "GET /v1/media — List media files with optional category filtering"
+---
+
+## Endpoint
+
+```
+GET /v1/media
+Authorization: Bearer sk_live_...
+```
+
+## Query Parameters
+
+| Param | Type | Default | Description |
+|---|---|---|---|
+| `category` | string | | Filter: `photo`, `video`, `audio`, `document` |
+| `limit` | number | `50` | Max results (capped at 100) |
+| `offset` | number | `0` | Pagination offset |
+
+## Example
+
+```bash
+# List all media
+curl "$API/v1/media" -H "Authorization: Bearer $API_KEY"
+
+# List only photos
+curl "$API/v1/media?category=photo&limit=20" -H "Authorization: Bearer $API_KEY"
+```
+
+## Response (200)
+
+```json
+{
+  "media": [
+    {
+      "id": "3449d148-5cc5-4bcc-9e02-242398025dc2",
+      "category": "photo",
+      "filename": "photo.jpg",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 45000,
+      "title": "Profile Photo",
+      "pinned": false,
+      "expiresAt": "2026-06-22T00:00:00Z",
+      "createdAt": "2026-03-24T00:00:00Z"
+    }
+  ],
+  "total": 1,
+  "limit": 50,
+  "offset": 0
+}
+```

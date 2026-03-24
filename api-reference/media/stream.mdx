@@ -1,0 +1,81 @@
+---
+title: "Stream Media"
+description: "GET /v1/media/:id/stream — Stream media with HTTP Range support"
+---
+
+## Endpoint
+
+```
+GET /v1/media/:id/stream
+Authorization: Bearer sk_live_...
+```
+
+Streams the binary content of a media file. Supports HTTP Range requests for video/audio seeking.
+
+## Path Parameters
+
+| Param | Description |
+|---|---|
+| `id` | Media file UUID |
+
+## Response Headers
+
+| Header | Description |
+|---|---|
+| `Content-Type` | Original MIME type |
+| `Content-Length` | File size in bytes |
+| `Content-Disposition` | `inline; filename="original.jpg"` |
+| `Accept-Ranges` | `bytes` |
+
+## Range Requests (206)
+
+For video/audio seeking, send a `Range` header:
+
+```bash
+# Full download
+curl -o video.mp4 "$API/v1/media/$ID/stream" \
+  -H "Authorization: Bearer $API_KEY"
+
+# Partial content (bytes 0-1024)
+curl -H "Range: bytes=0-1024" \
+  "$API/v1/media/$ID/stream" \
+  -H "Authorization: Bearer $API_KEY"
+```
+
+The server responds with `206 Partial Content` and a `Content-Range` header.
+
+## Get Metadata Only
+
+```
+GET /v1/media/:id
+```
+
+Returns the full media record without streaming the content:
+
+```json
+{
+  "id": "...",
+  "category": "video",
+  "filename": "recording.mp4",
+  "blobName": "media/video/recording__a1b2c3d4.mp4",
+  "mimeType": "video/mp4",
+  "sizeBytes": 5185628,
+  "title": "Demo Recording",
+  "description": null,
+  "metadata": null,
+  "expiresAt": "2026-06-22T00:00:00Z",
+  "createdAt": "2026-03-24T00:00:00Z"
+}
+```
+
+<Tip>
+  For public files, direct CDN access is faster:
+  `https://api.testnet.shelby.xyz/shelby/v1/blobs/{aptosAddress}/{blobName}`
+</Tip>
+
+## Errors
+
+| Status | Reason |
+|---|---|
+| `404` | Media not found |
+| `502` | Failed to read from Shelby network |

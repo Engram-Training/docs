@@ -1,0 +1,76 @@
+---
+title: "Upload Media"
+description: "POST /v1/media/upload — Upload media files with auto-categorization"
+---
+
+## Endpoint
+
+```
+POST /v1/media/upload
+Content-Type: multipart/form-data
+Authorization: Bearer sk_live_...
+```
+
+## Form Fields
+
+| Field | Required | Description |
+|---|---|---|
+| `file` | ✅ | Binary file (max 10 MB) |
+| `expiresIn` | | TTL (default `90d`). Format: `{n}{unit}` e.g. `1h`, `30d` |
+| `title` | | Display title |
+| `description` | | File description |
+| `pinned` | | `"true"` to pin (immune to TTL cleanup) |
+| `metadata` | | JSON string with custom metadata |
+
+## Auto-Categorization
+
+Files are automatically categorized by MIME type:
+
+| MIME Prefix | Category |
+|---|---|
+| `image/*` | `photo` |
+| `video/*` | `video` |
+| `audio/*` | `audio` |
+| Everything else | `document` |
+
+## Example
+
+```bash
+curl -X POST "$API/v1/media/upload" \
+  -H "Authorization: Bearer $API_KEY" \
+  -F "file=@photo.jpg" \
+  -F "expiresIn=90d" \
+  -F "title=Profile Photo" \
+  -F 'metadata={"tags":["profile"]}'
+```
+
+## Response (201)
+
+```json
+{
+  "id": "3449d148-5cc5-4bcc-9e02-242398025dc2",
+  "category": "photo",
+  "filename": "photo.jpg",
+  "blobName": "media/photo/photo__a1b2c3d4.jpg",
+  "mimeType": "image/jpeg",
+  "sizeBytes": 45000,
+  "title": "Profile Photo",
+  "pinned": false,
+  "expiresAt": "2026-06-22T00:00:00Z",
+  "createdAt": "2026-03-24T00:00:00Z"
+}
+```
+
+<Note>
+  Blob names follow the pattern `media/{category}/{name}__{shortId}{ext}`. The short ID ensures
+  uniqueness even when uploading files with the same name.
+</Note>
+
+## Errors
+
+| Status | Reason |
+|---|---|
+| `400` | No file uploaded or invalid `expiresIn` format |
+| `401` | Missing or invalid API key |
+| `429` | Rate limit exceeded |
+| `502` | Shelby network write failed |

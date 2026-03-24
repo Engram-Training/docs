@@ -29,6 +29,7 @@
               "features/versioning",
               "features/encryption",
               "features/file-uploads",
+              "features/media-storage",
               "features/search",
               "features/ttl-expiry",
               "features/pinning-importance",
@@ -58,6 +59,15 @@
               "api-reference/memory/delete",
               "api-reference/memory/list",
               "api-reference/memory/upload"
+            ]
+          },
+          {
+            "group": "Media",
+            "pages": [
+              "api-reference/media/upload",
+              "api-reference/media/list",
+              "api-reference/media/stream",
+              "api-reference/media/delete"
             ]
           },
           {
