@@ -11,7 +11,7 @@ All requests require a Bearer token in the `Authorization` header:
 Authorization: Bearer sk_live_your_key_here
 ```
 
-API keys are created when you register a developer account at [engram.training](https://engram.training).
+API keys are created when you register an account at [engram.training](https://engram.training).
 
 ## Key Format
 
@@ -22,12 +22,12 @@ sk_live_oByaTs1XOOA-yNUQOzRYyETgVx1g3g7rGQQhltiu
 
 ## Agent Isolation
 
-Each API key maps to a developer account. When you create an **agent** under your account, that agent gets:
-- Its own Aptos wallet (auto-funded)
+Each API key maps to your account. When you create an **agent** under your account, that agent gets:
+- Its own isolated storage namespace
 - Isolated memory keyspace
 - Separate rate limits
 
-Multiple agents under the same developer account are fully isolated from each other.
+Multiple agents under the same account are fully isolated from each other.
 
 ## Security Best Practices
 
