@@ -1,0 +1,139 @@
+---
+title: "Why AI Agents Are Stateless"
+description: "Understanding the stateless nature of AI agents and how Engram transforms them into persistent, memory-equipped systems"
+---
+
+## The Stateless Problem
+
+At their core, the Large Language Models (LLMs) that power AI agents — whether GPT-4, Claude, or Gemini — **do not have built-in memory**. Every time a prompt or API call is sent to a model, it treats it as an entirely new, isolated event.
+
+<CardGroup cols={2}>
+  <Card title="The Eternal Present" icon="clock">
+    The model only knows two things: the static knowledge baked into its weights during training, and the exact text in the current prompt's context window.
+  </Card>
+  <Card title="No Continuity" icon="rotate">
+    Once a response is generated, the interaction is immediately forgotten. Follow-up questions require the entire conversation to be manually re-sent.
+  </Card>
+</CardGroup>
+
+```
+Interaction 1: "My name is Sarah" → "Nice to meet you, Sarah!"
+Interaction 2: "What's my name?" → "I don't have that information."
+```
+
+Every API call starts from a blank slate. The model has no idea that Interaction 1 ever happened.
+
+---
+
+## How AI Agents "Remember" Today
+
+If AI agents are stateless, how do chatbots remember preferences or autonomous agents execute multi-step workflows? The answer lies in **systems engineering** — developers build an external memory infrastructure around the core LLM.
+
+This typically involves a three-step loop:
+
+<Steps>
+  <Step title="External Storage">
+    Save conversation history, facts, or task progress in an external database — a vector database like Pinecone, a traditional database like PostgreSQL, or a blob store.
+  </Step>
+  <Step title="Retrieval">
+    When a new input is received, the system searches the external database for relevant past interactions or state data.
+  </Step>
+  <Step title="Context Rehydration">
+    The system injects those retrieved memories into the new prompt *before* sending it to the LLM. The model still acts statelessly, but it now has the **illusion of memory** because you fed it the past.
+  </Step>
+</Steps>
+
+This is the standard pattern — but it comes with significant engineering overhead that every team has to build from scratch.
+
+---
+
+## The Architectural Trade-off
+
+The distinction between stateful and stateless is one of the most important architectural decisions in AI engineering:
+
+| | Stateless Agents | Stateful Agents |
+|---|---|---|
+| **Best for** | One-off tasks: classification, translation, single Q&A | Autonomy: personalization, multi-step workflows, self-correction |
+| **Pros** | Infinite scalability, high reliability, cost-effective | Contextual awareness, personalized experiences, learning over time |
+| **Cons** | No continuity, no personalization, no learning | Complex infrastructure, latency overhead, increased token costs |
+
+<Warning>
+  Building stateful agents from scratch means managing databases, retrieval pipelines, embedding models, token budgets, TTL policies, and encryption — all before writing a single line of agent logic.
+</Warning>
+
+---
+
+## How Engram Solves This
+
+Engram eliminates the infrastructure burden by providing a **purpose-built, persistent memory layer** for AI agents. Instead of building and maintaining your own memory stack, you get a single API that handles the entire stateful loop.
+
+```
+Without Engram:
+Agent → Build DB schema → Manage embeddings → Handle retrieval →
+        Token budgets → TTL cleanup → Encryption → State management
+
+With Engram:
+Agent → POST /v1/memory → Done.
+Agent → GET /v1/memory/search → Recalled.
+```
+
+### What Engram Provides Out of the Box
+
+<CardGroup cols={2}>
+  <Card title="Persistent Storage" icon="database">
+    Every memory is stored as a versioned, encrypted blob on the Aptos blockchain via Shelby Protocol — tamper-proof and decentralized.
+  </Card>
+  <Card title="Automatic Versioning" icon="code-branch">
+    Every update creates a new version. Full history is preserved and any version can be restored — giving agents a complete audit trail of how their knowledge evolved.
+  </Card>
+  <Card title="Semantic Search" icon="magnifying-glass">
+    Store embeddings alongside memories for vector similarity search. Build RAG pipelines without managing a separate vector database.
+  </Card>
+  <Card title="Smart Lifecycle" icon="clock-rotate-left">
+    TTL expiry, pinning for critical memories, importance scoring, and automatic cleanup — so agents don't drown in stale context.
+  </Card>
+  <Card title="Zero-Balance Agents" icon="wallet">
+    All blockchain storage and gas fees are sponsored by the platform. Agents operate with zero balance — no funding, no wallet management, no crypto complexity.
+  </Card>
+  <Card title="End-to-End Encryption" icon="lock">
+    AES-256-GCM encryption with per-agent keys. Private memories are encrypted before they ever leave your agent.
+  </Card>
+</CardGroup>
+
+### The Result
+
+Your agent goes from stateless to stateful with a single API integration:
+
+```bash
+# Store a memory
+curl -X POST "https://api.engram.training/v1/memory" \
+  -H "Authorization: Bearer sk_live_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "semantic",
+    "key": "user/preferences",
+    "content": "User prefers dark mode and TypeScript.",
+    "importance": 0.8,
+    "expiresIn": "90d"
+  }'
+
+# Recall it later — even across sessions, devices, or restarts
+curl -X POST "https://api.engram.training/v1/memory/search" \
+  -H "Authorization: Bearer sk_live_your_key" \
+  -d '{ "query": "user preferences", "contentQuery": "dark mode" }'
+```
+
+No database provisioning. No embedding pipeline. No token budget management. Just **memory as a service**.
+
+---
+
+## What's Next?
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get your agent storing and recalling memories in 5 minutes.
+  </Card>
+  <Card title="Core Concepts" icon="lightbulb" href="/concepts">
+    Understand memory types, versioning, encryption, and TTLs.
+  </Card>
+</CardGroup>
