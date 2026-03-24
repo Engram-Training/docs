@@ -39,9 +39,9 @@ Check which memories are about to expire:
 GET /v1/memory/expiring?within=24h&type=semantic
 ```
 
-## TTL Alerts & Renewal
+## TTL Renewal
 
-Get alerts and optionally renew TTLs in one call:
+Renew TTLs via the TTL alerts endpoint:
 
 ```bash
 curl -X POST "$API/memory/ttl-alerts" \
@@ -50,11 +50,16 @@ curl -X POST "$API/memory/ttl-alerts" \
   -d '{
     "within": "24h",
     "renewIds": ["id1", "id2"],
-    "renewDuration": "30d"
+    "renewExpiresIn": "30d"
   }'
 ```
 
-This returns the count of expiring memories and renews the specified ones.
+This extends the **on-chain blob expiration** and updates the **database expiration** in a single call. No re-upload of content is required — the blob data stays untouched.
+
+<Warning>
+  `renewExpiresIn` sets expiry from **now**, not additive to the current expiry.
+  Renewing with `"10d"` means the memory expires 10 days from now, regardless of its current TTL.
+</Warning>
 
 ## Webhooks
 
