@@ -20,13 +20,17 @@ GET /v1/memory/expiring
 
 ```json
 {
-  "memories": [
+  "expiring": [
     {
       "id": "...",
-      "key": "facts/temp-data",
       "type": "working",
+      "key": "facts/temp-data",
+      "version": 1,
+      "sizeBytes": 128,
       "expiresAt": "2026-03-23T21:00:00.000Z",
-      "pinned": false
+      "hoursLeft": 5.2,
+      "metadata": { "tags": ["temp"] },
+      "createdAt": "2026-03-20T09:00:00Z"
     }
   ],
   "count": 5,

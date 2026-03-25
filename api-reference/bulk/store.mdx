@@ -34,10 +34,11 @@ POST /v1/memory/bulk
 
 Maximum **20 items** per request. Each item follows the same schema as [Store Memory](/api-reference/memory/store).
 
-## Response (200)
+## Response (201)
 
 ```json
 {
+  "total": 2,
   "succeeded": 2,
   "failed": 0,
   "results": [
@@ -48,3 +49,9 @@ Maximum **20 items** per request. Each item follows the same schema as [Store Me
 ```
 
 Partial failures are possible — some items may succeed while others fail.
+
+## Credit Cost
+
+<Note>
+  Each item costs **5 credits** (`bulk.write`). A request with 10 items costs 50 credits total.
+</Note>

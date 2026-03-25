@@ -24,10 +24,10 @@ API keys start with `sk_live_` and are tied to your account. Each account can cr
 
 | Operation | Limit |
 |---|---|
-| Writes (POST, PUT, DELETE) | 60/min |
-| Reads (GET, search) | 300/min |
+| Writes (POST, PUT, DELETE) | 30/min per agent |
+| Reads (GET, search) | Unlimited |
 
-Exceeding limits returns `429 Too Many Requests`. Rate limits are per API key.
+Exceeding limits returns `429 Too Many Requests`. Rate limits are per agent API key.
 
 ## Response Format
 

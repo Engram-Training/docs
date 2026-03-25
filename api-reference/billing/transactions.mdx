@@ -1,0 +1,65 @@
+---
+title: "Transactions"
+description: "GET /v1/billing/transactions — Credit transaction history"
+---
+
+## Endpoint
+
+```
+GET /v1/billing/transactions
+Authorization: Bearer <JWT>
+```
+
+Returns paginated credit transaction history for the authenticated developer.
+
+## Query Parameters
+
+| Param | Type | Default | Description |
+|---|---|---|---|
+| `page` | `number` | `1` | Page number |
+| `limit` | `number` | `20` | Items per page (max 100) |
+| `type` | `string` | — | Filter by type: `topup`, `deduction`, `refund`, `starter`, `admin_grant` |
+
+## Response
+
+```json
+{
+  "transactions": [
+    {
+      "id": "tx-uuid",
+      "type": "topup",
+      "amount": 1000,
+      "balanceAfter": 1850,
+      "description": "Top-up: 1000 credits ($10.00 USD, completed)",
+      "createdAt": "2026-03-25T10:00:00Z"
+    },
+    {
+      "id": "tx-uuid-2",
+      "type": "deduction",
+      "amount": -5,
+      "balanceAfter": 1845,
+      "description": "memory.write (POST /v1/memory)",
+      "createdAt": "2026-03-25T10:05:00Z"
+    }
+  ],
+  "total": 42,
+  "page": 1,
+  "limit": 20
+}
+```
+
+## Transaction Types
+
+| Type | Direction | Description |
+|---|---|---|
+| `topup` | `+` | Credits purchased via Tender payment |
+| `starter` | `+` | Free credits on signup |
+| `admin_grant` | `+` | Credits granted by an admin |
+| `refund` | `+` | Credits refunded after a failed operation |
+| `deduction` | `−` | Credits consumed by an API operation |
+
+## Errors
+
+| Status | Reason |
+|---|---|
+| `401` | Missing or invalid JWT token |

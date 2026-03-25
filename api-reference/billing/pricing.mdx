@@ -1,0 +1,45 @@
+---
+title: "Pricing"
+description: "GET /v1/billing/pricing — Public credit pricing and operation costs"
+---
+
+## Endpoint
+
+```
+GET /v1/billing/pricing
+```
+
+No authentication required. Returns current credit pricing and per-operation costs.
+
+## Response
+
+```json
+{
+  "creditPriceUsd": 0.01,
+  "operationCosts": {
+    "memory.write": 5,
+    "memory.read": 1,
+    "memory.update": 5,
+    "memory.delete": 2,
+    "media.upload": 5,
+    "media.stream": 1,
+    "media.delete": 2,
+    "agent.create": 10,
+    "bulk.write": 5,
+    "search": 1
+  },
+  "note": "Costs are in credits. 1 credit = $0.0100 USD."
+}
+```
+
+## Fields
+
+| Field | Type | Description |
+|---|---|---|
+| `creditPriceUsd` | `number` | USD value of one credit |
+| `operationCosts` | `object` | Map of operation → credit cost |
+| `note` | `string` | Human-readable pricing summary |
+
+<Tip>
+  Operation costs are configurable by the platform admin via `PlatformConfig`. The defaults shown above may differ from the live values.
+</Tip>

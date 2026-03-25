@@ -58,7 +58,9 @@
               "api-reference/memory/update",
               "api-reference/memory/delete",
               "api-reference/memory/list",
-              "api-reference/memory/upload"
+              "api-reference/memory/upload",
+              "api-reference/memory/download",
+              "api-reference/memory/history"
             ]
           },
           {
@@ -83,6 +85,15 @@
             "pages": [
               "api-reference/bulk/store",
               "api-reference/bulk/delete"
+            ]
+          },
+          {
+            "group": "Billing",
+            "pages": [
+              "api-reference/billing/pricing",
+              "api-reference/billing/balance",
+              "api-reference/billing/transactions",
+              "api-reference/billing/topup"
             ]
           },
           {
