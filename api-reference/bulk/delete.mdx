@@ -27,6 +27,7 @@ Maximum **50 items** per request.
 
 ```json
 {
+  "total": 3,
   "succeeded": 3,
   "failed": 0,
   "results": [
@@ -38,3 +39,9 @@ Maximum **50 items** per request.
 ```
 
 Partial failures are possible — items that fail include an `error` field.
+
+## Credit Cost
+
+<Note>
+  Each item costs **2 credits** (`memory.delete`). A request with 10 items costs 20 credits total.
+</Note>

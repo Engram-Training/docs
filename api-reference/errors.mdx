@@ -19,13 +19,16 @@ All errors return a JSON body:
 | Status | Error | Solution |
 |---|---|---|
 | `400` | Invalid parameters | Check required fields, valid `expiresIn` format |
-| `401` | `Unauthorized` | Verify your API key is correct |
+| `401` | `Unauthorized` | Verify your API key is correct — may have been rotated |
+| `402` | `Insufficient credits` | Top up credits via `/v1/billing/initiate-topup` or the dashboard |
+| `403` | `Agent suspended or revoked` | Contact the account administrator |
 | `404` | `Memory not found` | Check the memory ID exists and belongs to your agent |
 | `409` | `Memory key already exists` | Use `PUT /v1/memory/:id` to update, or choose a different key |
 | `413` | `File too large` | Max blob size is 10 MB |
 | `413` | `Storage quota exceeded` | Delete unused memories or request a quota increase |
 | `422` | `Credential detected in shared content` | Set `visibility: "private"` for content with secrets |
-| `429` | `Rate limited` | Wait and retry. Writes: 30/min per agent. Reads: unlimited |
+| `429` | `Rate limited` | Wait and retry with exponential backoff. Writes: 30/min per agent. Reads: unlimited |
+| `502` | `Shelby storage error` | Retry up to 3× with 2–4s delays |
 
 ## Retry Strategy
 

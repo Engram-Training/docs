@@ -1,0 +1,37 @@
+---
+title: "Balance"
+description: "GET /v1/billing/balance — Get current credit balance"
+---
+
+## Endpoint
+
+```
+GET /v1/billing/balance
+Authorization: Bearer <JWT>
+```
+
+Returns the authenticated developer's credit balance and its USD equivalent.
+
+## Response
+
+```json
+{
+  "creditBalance": 850,
+  "creditValueUsd": 8.50,
+  "creditPriceUsd": 0.01
+}
+```
+
+## Fields
+
+| Field | Type | Description |
+|---|---|---|
+| `creditBalance` | `number` | Current credit balance (integer) |
+| `creditValueUsd` | `number` | USD value of the balance |
+| `creditPriceUsd` | `number` | Current USD price per credit |
+
+## Errors
+
+| Status | Reason |
+|---|---|
+| `401` | Missing or invalid JWT token |

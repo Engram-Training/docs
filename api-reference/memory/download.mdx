@@ -1,0 +1,55 @@
+---
+title: "Download File"
+description: "GET /v1/memory/:id/download — Stream a file with proper headers"
+---
+
+## Endpoint
+
+```
+GET /v1/memory/:id/download
+```
+
+Stream a file directly with the correct `Content-Type` and `Content-Disposition` headers. Use this instead of `GET /v1/memory/:id` when you need the raw binary file rather than a base64-encoded JSON response.
+
+## Path Parameters
+
+| Param | Description |
+|---|---|
+| `id` | Memory UUID |
+
+## Response Headers
+
+| Header | Description |
+|---|---|
+| `Content-Type` | Original MIME type (e.g. `application/pdf`) or `application/octet-stream` |
+| `Content-Disposition` | `attachment; filename="{name}{ext}"` |
+| `Content-Length` | File size in bytes |
+
+## Example
+
+```bash
+# Download to file
+curl -o report.pdf "$API/v1/memory/$ID/download" \
+  -H "Authorization: Bearer $API_KEY"
+
+# Stream to stdout
+curl "$API/v1/memory/$ID/download" \
+  -H "Authorization: Bearer $API_KEY" > video.mp4
+```
+
+<Tip>
+  Use this endpoint for binary files. For text memories, `GET /v1/memory/:id` returns the content directly in JSON.
+</Tip>
+
+## Credit Cost
+
+<Note>
+  This operation costs **1 credit** (`memory.read`).
+</Note>
+
+## Errors
+
+| Status | Reason |
+|---|---|
+| `404` | Memory not found |
+| `502` | Failed to read from Shelby network |

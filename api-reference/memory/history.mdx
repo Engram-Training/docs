@@ -1,0 +1,75 @@
+---
+title: "Version History"
+description: "GET /v1/memory/:id/history — View all versions of a memory"
+---
+
+## Endpoint
+
+```
+GET /v1/memory/:id/history
+```
+
+Returns all versions of a memory, ordered newest-first. Every `PUT` update creates a new version — this endpoint provides the complete version timeline.
+
+## Path Parameters
+
+| Param | Description |
+|---|---|
+| `id` | Any version's UUID for this memory |
+
+## Response (200)
+
+```json
+{
+  "key": "facts/project-stack",
+  "type": "semantic",
+  "totalVersions": 3,
+  "versions": [
+    {
+      "id": "def-789",
+      "version": 3,
+      "isLatest": true,
+      "sizeBytes": 64,
+      "createdAt": "2026-03-25T10:00:00Z"
+    },
+    {
+      "id": "def-456",
+      "version": 2,
+      "isLatest": false,
+      "sizeBytes": 48,
+      "createdAt": "2026-03-24T10:00:00Z"
+    },
+    {
+      "id": "def-123",
+      "version": 1,
+      "isLatest": false,
+      "sizeBytes": 42,
+      "createdAt": "2026-03-23T10:00:00Z"
+    }
+  ]
+}
+```
+
+## Fields
+
+| Field | Type | Description |
+|---|---|---|
+| `key` | string | Memory key |
+| `type` | string | Memory type |
+| `totalVersions` | number | Total number of versions |
+| `versions` | array | All versions, newest first |
+| `versions[].id` | string | UUID of this version |
+| `versions[].version` | number | Version number |
+| `versions[].isLatest` | boolean | Whether this is the current version |
+| `versions[].sizeBytes` | number | Size of this version's blob |
+| `versions[].createdAt` | string | When this version was created |
+
+<Tip>
+  Use `GET /v1/memory/:id` with any version's UUID to retrieve a specific version's full content.
+</Tip>
+
+## Errors
+
+| Status | Reason |
+|---|---|
+| `404` | Memory not found |

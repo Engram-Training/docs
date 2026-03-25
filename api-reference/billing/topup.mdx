@@ -1,0 +1,97 @@
+---
+title: "Top Up Credits"
+description: "Initiate and confirm credit purchases via cryptocurrency payments"
+---
+
+## Step 1: Initiate Top-Up
+
+```
+POST /v1/billing/initiate-topup
+Authorization: Bearer <JWT>
+Content-Type: application/json
+```
+
+Creates a payment request. Provide either `credits` (integer) or `amountUsd` (number).
+
+### Request Body
+
+```json
+{ "credits": 1000 }
+```
+
+or
+
+```json
+{ "amountUsd": 10.00 }
+```
+
+### Response
+
+```json
+{
+  "paymentId": "tender-payment-id",
+  "amountUsd": 10.00,
+  "credits": 1000,
+  "referenceId": "engram-abc12345-1711234567890",
+  "tenderStatus": "success",
+  "creditPriceUsd": 0.01
+}
+```
+
+Use `amountUsd` and `referenceId` to open the Tender payment widget. The `paymentId` is used in Step 2.
+
+---
+
+## Step 2: Confirm Top-Up
+
+```
+POST /v1/billing/confirm-topup
+Authorization: Bearer <JWT>
+Content-Type: application/json
+```
+
+After the cryptocurrency payment completes, call this endpoint to validate and credit the account.
+
+### Request Body
+
+```json
+{ "paymentId": "tender-payment-id" }
+```
+
+### Success Response (credited)
+
+```json
+{
+  "status": "credited",
+  "paymentStatus": "completed",
+  "usdReceived": 10.00,
+  "creditsAdded": 1000,
+  "creditBalance": 1850
+}
+```
+
+### Pending Response (not yet credited)
+
+```json
+{
+  "status": "not_credited",
+  "paymentStatus": "pending",
+  "message": "Payment is pending. Credits will be added when payment completes.",
+  "creditBalance": 850
+}
+```
+
+## Errors
+
+| Status | Reason |
+|---|---|
+| `400` | Missing `paymentId` or invalid amount |
+| `401` | Missing or invalid JWT token |
+| `409` | Payment already processed (idempotent) |
+| `422` | Payment validated but no USD received |
+| `502` | Tender gateway communication failed |
+| `503` | Payment gateway not configured |
+
+<Warning>
+  Each `paymentId` can only be confirmed once. Duplicate calls return `409` with the current balance.
+</Warning>

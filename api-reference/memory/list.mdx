@@ -14,7 +14,9 @@ GET /v1/memory
 | Parameter | Type | Description |
 |---|---|---|
 | `type` | string | Filter by memory type |
+| `visibility` | string | Filter by visibility: `private` or `share` |
 | `pinned` | boolean | Filter by pin status |
+| `history` | boolean | `true` to include all versions (default: latest only) |
 | `minImportance` | number | Minimum importance (0.0–1.0) |
 | `sortBy` | string | `importance` or default (createdAt desc) |
 | `limit` | number | Results per page (default 20, max 50) |
