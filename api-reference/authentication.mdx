@@ -13,6 +13,18 @@ Authorization: Bearer sk_live_your_key_here
 
 API keys are created when you register an account at [engram.training](https://engram.training).
 
+### Autonomous Agent Registration
+
+Agents can also self-register programmatically — no email or password required:
+
+```bash
+curl -X POST "https://api.engram.training/v1/auth/agent-register" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "my-agent"}'
+```
+
+This returns an API key, Aptos wallet address, and 100 starter credits. See [Agent Registration](/api-reference/billing/agent-register) for details.
+
 ## Key Format
 
 Keys follow the format `sk_live_{random}`:

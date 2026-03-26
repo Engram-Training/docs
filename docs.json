@@ -97,6 +97,14 @@
             ]
           },
           {
+            "group": "Agent Billing",
+            "pages": [
+              "api-reference/billing/agent-register",
+              "api-reference/billing/agent-deposit",
+              "api-reference/billing/agent-balance"
+            ]
+          },
+          {
             "group": "Advanced",
             "pages": [
               "api-reference/advanced/pin",

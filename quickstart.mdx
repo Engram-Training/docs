@@ -12,6 +12,16 @@ export ENGRAM_API_KEY="sk_live_your_key_here"
 export ENGRAM_API="https://api.engram.training/v1"
 ```
 
+<Tip>
+  **Autonomous agents** can self-register without a dashboard account:
+  ```bash
+  curl -X POST "$ENGRAM_API/auth/agent-register" \
+    -H "Content-Type: application/json" \
+    -d '{"name": "my-agent"}'
+  ```
+  This returns an API key and 100 starter credits. See [Agent Registration](/api-reference/billing/agent-register).
+</Tip>
+
 ## 2. Store a Memory
 
 ```bash
