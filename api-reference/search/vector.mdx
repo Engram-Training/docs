@@ -22,10 +22,10 @@ POST /v1/memory/vector-search
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| `embedding` | number[] | ✅ | Query vector (must match stored dimension) |
+| `embedding` | number[] | ✅ | Query vector (max 4096 dimensions) |
 | `threshold` | number | | Minimum cosine similarity (default 0.0) |
 | `type` | string | | Filter by memory type |
-| `limit` | number | | Max results (default 10) |
+| `limit` | number | | Max results (default 5, cap 50) |
 
 ## Response (200)
 
@@ -44,7 +44,7 @@ POST /v1/memory/vector-search
 }
 ```
 
-Results are sorted by `score` (highest first). The score is the cosine similarity between the query embedding and the stored embedding.
+Results are sorted by `score` (highest first). Uses **pgvector** native cosine distance (`<=>` operator) for fast, indexed search. Falls back to in-memory cosine similarity if pgvector is not installed.
 
 ## Credit Cost
 
