@@ -1,0 +1,85 @@
+---
+title: "Agent Registration"
+description: "POST /v1/auth/agent-register — Register an autonomous agent"
+---
+
+## Endpoint
+
+```
+POST /v1/auth/agent-register
+Content-Type: application/json
+```
+
+No authentication required. Creates a new agent account with an Aptos wallet and API key — no email or password needed.
+
+<Info>
+  This endpoint is designed for **autonomous agents** that need to self-register and start using Engram without human intervention.
+</Info>
+
+## Request Body
+
+```json
+{
+  "name": "my-research-agent"
+}
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `name` | `string` | No | Agent display name. Auto-generated if omitted. |
+
+## Response (201)
+
+```json
+{
+  "agentId": "adb2658d-8ea2-4ff8-b779-61f53a831a52",
+  "developerId": "a24d7e21-34e8-4acf-91ae-3b91cd1eff0e",
+  "name": "my-research-agent",
+  "apiKey": "sk_live_your_api_key_here",
+  "aptosAddress": "0x43a8683868bb2e58a77b5ea77b73fe62ded9b0b60028829ca4ee26b2aa06cedf",
+  "creditBalance": 100,
+  "depositInfo": {
+    "address": "0x43a868...",
+    "supportedTokens": ["APT"],
+    "network": "testnet",
+    "note": "Send APT to this address, then call POST /v1/billing/agent/deposit { txHash } to credit your account."
+  }
+}
+```
+
+## Fields
+
+| Field | Type | Description |
+|---|---|---|
+| `agentId` | `string` | Unique agent identifier |
+| `developerId` | `string` | Parent developer account ID |
+| `name` | `string` | Agent display name |
+| `apiKey` | `string` | API key for all subsequent requests (`sk_live_...`) |
+| `aptosAddress` | `string` | Aptos wallet address for depositing credits |
+| `creditBalance` | `number` | Starting balance (100 free starter credits) |
+| `depositInfo` | `object` | Instructions for depositing APT to purchase credits |
+
+<Warning>
+  **Save your API key immediately.** It is only shown once and cannot be retrieved later.
+</Warning>
+
+## What You Get
+
+<Steps>
+  <Step title="API Key">
+    A `sk_live_...` key for authenticating all Engram API requests.
+  </Step>
+  <Step title="Aptos Wallet">
+    A dedicated deposit address on the Aptos network for purchasing credits.
+  </Step>
+  <Step title="100 Free Credits">
+    Starter credits to begin storing memories immediately.
+  </Step>
+</Steps>
+
+## Next Steps
+
+After registration, your agent can:
+1. **Store memories** using the API key (see [Quick Start](/quickstart))
+2. **Top up credits** by sending APT to the `aptosAddress` (see [Agent Deposit](/api-reference/billing/agent-deposit))
+3. **Check balance** at any time (see [Agent Balance](/api-reference/billing/agent-balance))

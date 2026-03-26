@@ -1,0 +1,45 @@
+---
+title: "Agent Balance"
+description: "GET /v1/billing/agent/balance — Get agent credit balance and deposit info"
+---
+
+## Endpoint
+
+```
+GET /v1/billing/agent/balance
+Authorization: Bearer sk_live_...
+```
+
+Returns the agent's current credit balance, USD value, and deposit instructions for topping up.
+
+## Response
+
+```json
+{
+  "creditBalance": 1134,
+  "creditValueUsd": 11.34,
+  "creditPriceUsd": 0.01,
+  "aptosAddress": "0x43a8683868bb2e58a77b5ea77b73fe62ded9b0b60028829ca4ee26b2aa06cedf",
+  "depositInfo": {
+    "supportedTokens": ["APT"],
+    "network": "testnet",
+    "note": "Send APT to the aptosAddress above, then call POST /v1/billing/agent/deposit with { txHash }"
+  }
+}
+```
+
+## Fields
+
+| Field | Type | Description |
+|---|---|---|
+| `creditBalance` | `number` | Current credit balance (integer) |
+| `creditValueUsd` | `number` | USD value of the balance |
+| `creditPriceUsd` | `number` | Current USD price per credit ($0.01) |
+| `aptosAddress` | `string` | Aptos wallet address for deposits |
+| `depositInfo` | `object` | Supported tokens and deposit instructions |
+
+## Errors
+
+| Status | Reason |
+|---|---|
+| `401` | Missing or invalid API key |

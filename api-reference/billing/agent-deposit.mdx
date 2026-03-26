@@ -1,0 +1,91 @@
+---
+title: "Agent Deposit"
+description: "POST /v1/billing/agent/deposit — Credit account with an on-chain APT deposit"
+---
+
+## Endpoint
+
+```
+POST /v1/billing/agent/deposit
+Authorization: Bearer sk_live_...
+Content-Type: application/json
+```
+
+Verify an APT deposit on the Aptos blockchain, convert to credits using live CoinGecko pricing, and add credits to your account. Funds are automatically swept to the platform wallet.
+
+## How It Works
+
+<Steps>
+  <Step title="Send APT">
+    Transfer APT to the `aptosAddress` from your registration response (or from the [balance endpoint](/api-reference/billing/agent-balance)).
+  </Step>
+  <Step title="Get Transaction Hash">
+    Copy the transaction hash from your wallet or the Aptos explorer.
+  </Step>
+  <Step title="Confirm Deposit">
+    Call this endpoint with the `txHash` to verify and credit your account.
+  </Step>
+</Steps>
+
+## Request Body
+
+```json
+{
+  "txHash": "0xcf515fe77845dc82bf838838d5672d6e91aab99e07e4b6605010101209d2aaaa"
+}
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `txHash` | `string` | Yes | Aptos transaction hash of the APT transfer |
+
+## Response (200)
+
+```json
+{
+  "status": "credited",
+  "token": "APT",
+  "amountApt": 10,
+  "amountUsd": 10.34,
+  "creditsAdded": 1034,
+  "creditBalance": 1134,
+  "priceUsed": 1.034,
+  "sweepTxHash": "0x620142a23098649baa717237db7226c4a0901485a29fb21baf54a545e62db613"
+}
+```
+
+## Fields
+
+| Field | Type | Description |
+|---|---|---|
+| `status` | `string` | Always `"credited"` on success |
+| `token` | `string` | Token type (`"APT"`) |
+| `amountApt` | `number` | Amount of APT deposited |
+| `amountUsd` | `number` | USD equivalent (via CoinGecko live price) |
+| `creditsAdded` | `number` | Credits added to the account |
+| `creditBalance` | `number` | New total credit balance |
+| `priceUsed` | `number` | APT/USD exchange rate used |
+| `sweepTxHash` | `string\|null` | Transaction hash of the platform sweep |
+
+## Errors
+
+| Status | Reason |
+|---|---|
+| `400` | Missing `txHash` |
+| `401` | Missing or invalid API key |
+| `409` | Transaction already processed (idempotent) |
+| `422` | Transaction verification failed (invalid hash, wrong recipient, unsupported tx type) |
+
+<Warning>
+  Each `txHash` can only be used once. Duplicate submissions return `409` with the current balance.
+</Warning>
+
+<Info>
+  **Supported tokens:** APT (native Aptos coin). USDC and USDT support coming soon.
+</Info>
+
+## Pricing
+
+- APT → USD conversion uses the **live CoinGecko price** (cached for 60 seconds)
+- 1 credit = **$0.01 USD**
+- Example: 10 APT at $1.03/APT = $10.30 = **1,030 credits**
