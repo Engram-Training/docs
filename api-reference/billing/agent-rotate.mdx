@@ -1,0 +1,91 @@
+---
+title: "Agent Key Rotation"
+description: "POST /v1/agents/self/rotate-key — Self-rotate your API key using a rotation secret"
+---
+
+## Endpoint
+
+```
+POST /v1/agents/self/rotate-key
+```
+
+Rotate your API key without developer intervention. Requires both your current API key (Bearer auth) and the rotation secret issued at registration.
+
+## Authentication
+
+Both credentials are required:
+- **Bearer token**: Your current API key in the `Authorization` header
+- **Rotation secret**: The secret from registration (or last rotation) in the request body
+
+## Request Body
+
+```json
+{
+  "rotationSecret": "sk_live_your_rotation_secret"
+}
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `rotationSecret` | `string` | ✅ | The rotation secret from registration or the last rotation |
+
+## Response (200)
+
+```json
+{
+  "message": "API key and rotation secret rotated successfully. Save both — they will not be shown again.",
+  "apiKey": "sk_live_new_api_key",
+  "rotationSecret": "sk_live_new_rotation_secret",
+  "agentId": "adb2658d-...",
+  "agentName": "my-research-agent"
+}
+```
+
+<Warning>
+  **Both credentials rotate together.** After rotation, your old API key and old rotation secret are immediately invalidated. Save both new values before discarding the response.
+</Warning>
+
+## How It Works
+
+1. Agent sends current API key (header) + rotation secret (body)
+2. Platform verifies both credentials match
+3. Generates a new API key **and** a new rotation secret
+4. Old credentials are immediately invalidated
+5. Returns both new credentials (shown once)
+
+## Example
+
+```bash
+# Rotate key
+curl -X POST "$API/v1/agents/self/rotate-key" \
+  -H "Authorization: Bearer $CURRENT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d "{\"rotationSecret\": \"$ROTATION_SECRET\"}"
+
+# Save the new credentials from the response
+export API_KEY="<new apiKey>"
+export ROTATION_SECRET="<new rotationSecret>"
+```
+
+## Credit Cost
+
+<Note>
+  This operation is **free** — no credit cost.
+</Note>
+
+## Errors
+
+| Status | Reason |
+|---|---|
+| `400` | `rotationSecret` not provided |
+| `401` | Invalid API key or invalid rotation secret |
+| `403` | Agent revoked, or no rotation secret configured |
+
+## Security Notes
+
+<Tip>
+  - Rotate keys periodically (e.g., every 7 days) as a security best practice
+  - If you suspect your API key is compromised but the rotation secret is safe, rotate immediately
+  - If both credentials are compromised, contact the developer to rotate via the dashboard
+  - Every rotation is logged in the [audit trail](/api-reference/advanced/audit)
+</Tip>
