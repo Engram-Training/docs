@@ -18,8 +18,8 @@ GET /v1/memory
 | `pinned` | boolean | Filter by pin status |
 | `history` | boolean | `true` to include all versions (default: latest only) |
 | `minImportance` | number | Minimum importance (0.0–1.0) |
-| `sortBy` | string | `importance` or default (createdAt desc) |
-| `limit` | number | Results per page (default 20, max 50) |
+| `sortBy` | string | `createdAt`, `updatedAt`, or `importance` (default: `createdAt` desc) |
+| `limit` | number | Results per page (default 50, max 100) |
 | `offset` | number | Offset for traditional pagination |
 | `cursor` | string | Cursor for cursor-based pagination |
 

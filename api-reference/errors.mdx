@@ -52,22 +52,22 @@ async function withRetry(fn, maxRetries = 3) {
 
 ## Validation Errors
 
-The `400` status includes details about what's wrong:
+With Zod schema validation, `400` errors include structured field-level details:
+
+```json
+{
+  "error": "Validation failed",
+  "details": [
+    { "field": "type", "message": "Must be a built-in type or custom:..." },
+    { "field": "content", "message": "Required" }
+  ]
+}
+```
+
+Other `400` errors still use the simple format:
 
 ```json
 {
   "error": "Invalid expiresIn format. Use e.g. \"1h\", \"24h\", \"30d\". Minimum 10 seconds."
-}
-```
-
-```json
-{
-  "error": "Missing required fields: type and key are required"
-}
-```
-
-```json
-{
-  "error": "importance must be a number between 0 and 1"
 }
 ```
