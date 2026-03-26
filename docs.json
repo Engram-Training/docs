@@ -19,6 +19,7 @@
               "index",
               "why-stateless",
               "quickstart",
+              "for-agents",
               "concepts"
             ]
           },
@@ -100,6 +101,7 @@
             "group": "Agent Billing",
             "pages": [
               "api-reference/billing/agent-register",
+              "api-reference/billing/agent-rotate",
               "api-reference/billing/agent-deposit",
               "api-reference/billing/agent-balance"
             ]

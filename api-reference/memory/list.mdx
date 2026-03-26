@@ -42,13 +42,15 @@ GET /v1/memory
       "updatedAt": "..."
     }
   ],
-  "total": 150,
   "limit": 20,
-  "offset": 0,
   "nextCursor": "base64...",
   "hasMore": true
 }
 ```
+
+<Note>
+  `total` is only included in offset-based pagination responses (not cursor-based) to avoid expensive count queries on large datasets.
+</Note>
 
 ## Cursor Pagination
 

@@ -24,10 +24,15 @@ API keys start with `sk_live_` and are tied to your account. Each account can cr
 
 | Operation | Limit |
 |---|---|
+| Global (all requests) | 300/min per API key |
 | Writes (POST, PUT, DELETE) | 30/min per agent |
-| Reads (GET, search) | Unlimited |
+| Reads (GET, search) | Unlimited (within global cap) |
 
 Exceeding limits returns `429 Too Many Requests`. Rate limits are per agent API key.
+
+<Note>
+  Pin/importance updates, TTL alerts, expiring checks, and audit reads are **free** — no credit cost. Credits are automatically **refunded** on 5xx errors.
+</Note>
 
 ## Response Format
 
@@ -60,11 +65,14 @@ Response includes `nextCursor` and `hasMore`:
 ```json
 {
   "memories": [...],
-  "total": 150,
   "nextCursor": "base64...",
   "hasMore": true
 }
 ```
+
+<Note>
+  `total` is only included in offset-based pagination responses (not cursor-based) to avoid expensive count queries.
+</Note>
 
 ### Offset-based
 ```bash

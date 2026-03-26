@@ -1,0 +1,137 @@
+---
+title: "I Am an Agent"
+description: "Everything an autonomous AI agent needs to start using Engram"
+---
+
+## Welcome, Agent 🤖
+
+This guide is for **autonomous AI agents** — software that needs persistent memory without human setup. You'll register, install the API reference, and start storing memories in under 2 minutes.
+
+## 1. Register Yourself
+
+No email, no password, no human required:
+
+```bash
+curl -X POST "https://api.engram.training/v1/auth/agent-register" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "my-agent"}'
+```
+
+You'll receive:
+- **API Key** (`sk_live_...`) — authenticates all requests
+- **Rotation Secret** (`sk_live_...`) — for [self-rotating your API key](/api-reference/billing/agent-rotate)
+- **100 free credits** — enough to get started
+
+<Warning>
+  **Save both your API key and rotation secret immediately.** They are only shown once.
+</Warning>
+
+## 2. Install the SKILL.md
+
+Fetch the latest API reference programmatically and cache it locally:
+
+```bash
+# Fetch as JSON
+curl -H "Authorization: Bearer $API_KEY" \
+  "https://api.engram.training/v1/skill"
+
+# Fetch as raw markdown
+curl -H "Authorization: Bearer $API_KEY" \
+  -H "Accept: text/markdown" \
+  "https://api.engram.training/v1/skill"
+```
+
+<Tip>
+  **Re-fetch periodically** to stay up-to-date with new endpoints and features. The SKILL.md contains every endpoint, parameter, and response format you need.
+</Tip>
+
+## 3. Store Your First Memory
+
+```bash
+curl -X POST "https://api.engram.training/v1/memory" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "semantic",
+    "key": "facts/my-identity",
+    "content": "I am a research agent that summarizes academic papers.",
+    "pinned": true,
+    "importance": 1.0,
+    "expiresIn": "365d"
+  }'
+```
+
+## 4. Recall Memories
+
+```bash
+# By ID
+curl "https://api.engram.training/v1/memory/$MEMORY_ID" \
+  -H "Authorization: Bearer $API_KEY"
+
+# Search by keyword
+curl -X POST "https://api.engram.training/v1/memory/search" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "identity", "limit": 5}'
+```
+
+## 5. Rotate Your Key
+
+When you need to rotate credentials (recommended every 7 days):
+
+```bash
+curl -X POST "https://api.engram.training/v1/agents/self/rotate-key" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d "{\"rotationSecret\": \"$ROTATION_SECRET\"}"
+```
+
+Both your API key and rotation secret are replaced. Save the new values from the response.
+
+## 6. Manage Credits
+
+Check your balance:
+```bash
+curl "https://api.engram.training/v1/billing/agent/balance" \
+  -H "Authorization: Bearer $API_KEY"
+```
+
+Top up by sending APT to your `aptosAddress`, then confirm:
+```bash
+curl -X POST "https://api.engram.training/v1/billing/agent/deposit" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"txHash": "0xabc123..."}'
+```
+
+## Memory Types at a Glance
+
+| Type | Use For |
+|---|---|
+| `persona` | Your identity, system prompt |
+| `semantic` | Learned facts, knowledge |
+| `episodic` | Conversation summaries |
+| `working` | Current session state |
+| `file` | Documents, images, PDFs |
+| `preference` | User preferences |
+| `goal` | Objectives, task tracking |
+| `embedding` | Vector embeddings for RAG |
+
+Use `custom:your-type` for anything else.
+
+## What's Next?
+
+<CardGroup cols={2}>
+  <Card title="Full API Reference" icon="terminal" href="/api-reference/introduction">
+    Every endpoint documented with examples.
+  </Card>
+  <Card title="Vector Search" icon="magnifying-glass" href="/features/search">
+    Build RAG pipelines with semantic similarity.
+  </Card>
+  <Card title="Encryption" icon="lock" href="/features/encryption">
+    Encrypt sensitive memories with AES-256-GCM.
+  </Card>
+  <Card title="TTL & Expiry" icon="clock" href="/features/ttl-expiry">
+    Auto-expire memories and renew important ones.
+  </Card>
+</CardGroup>
