@@ -29,16 +29,13 @@ or
 
 ```json
 {
-  "paymentId": "tender-payment-id",
   "amountUsd": 10.00,
   "credits": 1000,
-  "referenceId": "engram-abc12345-1711234567890",
-  "tenderStatus": "success",
   "creditPriceUsd": 0.01
 }
 ```
 
-Use `amountUsd` and `referenceId` to open the Tender payment widget. The `paymentId` is used in Step 2.
+Use `amountUsd` to configure the Tender SDK payment widget with a matching `amount` and a unique `referenceId`.
 
 ---
 
@@ -50,13 +47,23 @@ Authorization: Bearer <JWT>
 Content-Type: application/json
 ```
 
-After the cryptocurrency payment completes, call this endpoint to validate and credit the account.
+After the Tender SDK's `onEventResponse` callback fires with a `completed`, `partial-payment`, or `overpayment` status, call this endpoint to credit the account.
 
 ### Request Body
 
 ```json
-{ "paymentId": "tender-payment-id" }
+{
+  "paymentId": "unique-reference-id",
+  "sdkStatus": "completed",
+  "sdkAmount": 10.00
+}
 ```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `paymentId` | `string` | ✅ | The unique reference ID used with the Tender SDK |
+| `sdkStatus` | `string` | ✅ | Payment status from the SDK callback (`completed`, `partial-payment`, `overpayment`) |
+| `sdkAmount` | `number` | ✅ | USD amount from the SDK's `onFinishResponse.data.amount` |
 
 ### Success Response (credited)
 
@@ -85,11 +92,10 @@ After the cryptocurrency payment completes, call this endpoint to validate and c
 
 | Status | Reason |
 |---|---|
-| `400` | Missing `paymentId` or invalid amount |
+| `400` | Missing `paymentId` or `sdkStatus` |
 | `401` | Missing or invalid JWT token |
 | `409` | Payment already processed (idempotent) |
-| `422` | Payment validated but no USD received |
-| `502` | Tender gateway communication failed |
+| `422` | `sdkAmount` missing, zero/negative, or exceeds $10,000 cap |
 | `503` | Payment gateway not configured |
 
 <Warning>
