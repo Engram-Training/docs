@@ -18,7 +18,7 @@ Returns paginated credit transaction history for the authenticated developer.
 |---|---|---|---|
 | `page` | `number` | `1` | Page number |
 | `limit` | `number` | `20` | Items per page (max 100) |
-| `type` | `string` | — | Filter by type: `topup`, `deduction`, `refund`, `starter`, `admin_grant` |
+| `type` | `string` | — | Filter by type: `topup`, `deduction`, `refund`, `starter`, `admin_grant`, `topup_pending`, `topup_completed` |
 
 ## Response
 
@@ -53,6 +53,9 @@ Returns paginated credit transaction history for the authenticated developer.
 | Type | Direction | Description |
 |---|---|---|
 | `topup` | `+` | Credits purchased via Tender payment |
+| `topup_pending` | `0` | Payment intent created, awaiting completion |
+| `topup_completed` | `0` | Pending intent marked as completed after crediting |
+| `topup_failed` | `0` | Payment verification failed |
 | `starter` | `+` | Free credits on signup |
 | `admin_grant` | `+` | Credits granted by an admin |
 | `refund` | `+` | Credits refunded after a failed operation |
