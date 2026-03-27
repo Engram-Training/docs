@@ -93,8 +93,7 @@
             "pages": [
               "api-reference/billing/pricing",
               "api-reference/billing/balance",
-              "api-reference/billing/transactions",
-              "api-reference/billing/topup"
+              "api-reference/billing/transactions"
             ]
           },
           {
