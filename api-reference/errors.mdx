@@ -31,7 +31,6 @@ All errors return a JSON body:
 | `422` | `Invalid payment amount` | Payment gateway returned an invalid amount — contact support |
 | `429` | `Rate limited` | Wait and retry with exponential backoff. Global: 300/min per key. Writes: 30/min per agent |
 | `429` | `Too many rotation attempts` | Key rotation is limited to 3 per 15 minutes |
-| `429` | `Too many password attempts` | Password changes are limited to 5 per 15 minutes |
 | `502` | `Shelby storage error` | Retry up to 3× with 2–4s delays |
 
 ## Retry Strategy
