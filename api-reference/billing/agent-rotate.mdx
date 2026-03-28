@@ -67,10 +67,10 @@ export API_KEY="<new apiKey>"
 export ROTATION_SECRET="<new rotationSecret>"
 ```
 
-## Credit Cost
+## Rate Limit
 
 <Note>
-  This operation is **free** — no credit cost.
+  This operation is **free** (no credit cost), but is rate-limited to **3 rotations per 15 minutes** per IP address to prevent credential cycling attacks.
 </Note>
 
 ## Errors
@@ -80,6 +80,7 @@ export ROTATION_SECRET="<new rotationSecret>"
 | `400` | `rotationSecret` not provided |
 | `401` | Invalid API key or invalid rotation secret |
 | `403` | Agent revoked, or no rotation secret configured |
+| `429` | Too many rotation attempts (max 3 per 15 minutes) |
 
 ## Security Notes
 

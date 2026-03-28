@@ -98,4 +98,13 @@ Media files follow the same TTL rules as memories. Set `expiresIn` during upload
 | `7d` | Weekly reports |
 | `30d` | Monthly content |
 | `90d` | Long-term storage (default) |
-| `365d` | Annual archives |
+| `365d` | Annual archives (maximum) |
+
+## Credit Costs
+
+| Operation | Cost | Notes |
+|---|---|---|
+| Upload (`POST`) | `media.upload` (5 credits) | Refunded if upload fails |
+| Stream (`GET .../stream`) | `media.stream` (1 credit) | Actual Shelby read |
+| Delete (`DELETE`) | `media.delete` (2 credits) | |
+| List / Metadata (`GET`) | **Free** | DB-only, no Shelby read |
