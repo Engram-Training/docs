@@ -18,7 +18,7 @@ All errors return a JSON body:
 
 | Status | Error | Solution |
 |---|---|---|
-| `400` | Invalid parameters | Check required fields, valid `expiresIn` format |
+| `400` | Invalid parameters | Check required fields, valid `expiresIn` format (max `365d`) |
 | `401` | `Unauthorized` | Verify your API key is correct — may have been rotated |
 | `402` | `Insufficient credits` | Top up credits via `/v1/billing/initiate-topup` or the dashboard |
 | `403` | `Agent suspended or revoked` | Contact the account administrator |
@@ -26,8 +26,12 @@ All errors return a JSON body:
 | `409` | `Memory key already exists` | Use `PUT /v1/memory/:id` to update, or choose a different key |
 | `413` | `File too large` | Max blob size is 10 MB |
 | `413` | `Storage quota exceeded` | Delete unused memories or request a quota increase |
+| `415` | `Unsupported Content-Type` | Send `application/json` or `multipart/form-data` for POST/PUT/PATCH |
 | `422` | `Credential detected in shared content` | Set `visibility: "private"` for content with secrets |
+| `422` | `Invalid payment amount` | Payment gateway returned an invalid amount — contact support |
 | `429` | `Rate limited` | Wait and retry with exponential backoff. Global: 300/min per key. Writes: 30/min per agent |
+| `429` | `Too many rotation attempts` | Key rotation is limited to 3 per 15 minutes |
+| `429` | `Too many password attempts` | Password changes are limited to 5 per 15 minutes |
 | `502` | `Shelby storage error` | Retry up to 3× with 2–4s delays |
 
 ## Retry Strategy

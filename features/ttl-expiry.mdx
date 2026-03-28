@@ -18,7 +18,7 @@ Every memory has a time-to-live. Set it with `expiresIn`:
 | `{n}h` | `6h` | 6 hours |
 | `{n}d` | `30d` | 30 days |
 
-**Default:** `30d`. **Minimum:** `10s`.
+**Default:** `30d`. **Minimum:** `10s`. **Maximum:** `365d`.
 
 ## What Happens on Expiry
 
@@ -59,6 +59,7 @@ This extends the **on-chain blob expiration** and updates the **database expirat
 <Warning>
   `renewExpiresIn` sets expiry from **now**, not additive to the current expiry.
   Renewing with `"10d"` means the memory expires 10 days from now, regardless of its current TTL.
+  Maximum renewal is `365d`.
 </Warning>
 
 ## Webhooks

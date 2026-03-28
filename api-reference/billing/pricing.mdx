@@ -43,3 +43,7 @@ No authentication required. Returns current credit pricing and per-operation cos
 <Tip>
   Operation costs are configurable by the platform admin via `PlatformConfig`. The defaults shown above may differ from the live values.
 </Tip>
+
+<Note>
+  **Media metadata and listing are free.** The `media.stream` cost only applies to `GET /v1/media/:id/stream` (actual Shelby reads). Listing media (`GET /v1/media`) and fetching metadata (`GET /v1/media/:id`) do not consume credits.
+</Note>
