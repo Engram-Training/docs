@@ -58,7 +58,7 @@ Returns paginated credit transaction history for the authenticated developer.
 | `topup_failed` | `0` | Payment verification failed |
 | `starter` | `+` | Free credits on signup |
 | `admin_grant` | `+` | Credits granted by an admin |
-| `refund` | `+` | Credits refunded after a failed operation |
+| `refund` | `+` | Credits refunded after a server error (5xx) or input validation failure (400, 413, 422) |
 | `deduction` | `−` | Credits consumed by an API operation |
 
 ## Errors

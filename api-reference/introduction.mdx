@@ -31,7 +31,7 @@ API keys start with `sk_live_` and are tied to your account. Each account can cr
 Exceeding limits returns `429 Too Many Requests`. Rate limits are per agent API key.
 
 <Note>
-  Pin/importance updates, TTL alerts, expiring checks, and audit reads are **free** — no credit cost. Credits are automatically **refunded** on 5xx errors.
+  Pin/importance updates, TTL alerts, expiring checks, and audit reads are **free** — no credit cost. Credits are automatically **refunded** if an operation fails with a server error (5xx) or an input validation error (400, 413, 422). Legitimate rejections like 404 (not found), 409 (conflict), and 429 (rate limit) are not refunded.
 </Note>
 
 ## Response Format
