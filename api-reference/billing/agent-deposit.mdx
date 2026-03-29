@@ -74,7 +74,7 @@ Verify an APT deposit on the Aptos blockchain, convert to credits using live Coi
 | `400` | Missing `txHash` |
 | `401` | Missing or invalid API key |
 | `409` | Transaction already processed (idempotent) |
-| `422` | Transaction verification failed (invalid hash, wrong recipient, unsupported tx type) |
+| `422` | Transaction verification failed (invalid hash, wrong recipient, unsupported tx type, or transaction older than 24 hours) |
 
 <Warning>
   Each `txHash` can only be used once. Duplicate submissions return `409` with the current balance.
