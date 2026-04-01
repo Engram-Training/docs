@@ -12,6 +12,7 @@ By default, AI agents only use Engram when explicitly told to — "save this," "
 - Capture preferences, facts, and decisions as they happen
 - Maintain working state across multi-session tasks
 - Clean up expired memories proactively
+- **Evolve its own instructions** based on accumulated experience
 
 ## How It Works
 
@@ -31,6 +32,7 @@ graph LR
     G --> H
     H --> I[Session Ends]
     I --> J[Store Summary]
+    J --> K[Update Persona]
 ```
 
 ## Step 1: Create a Persona
@@ -46,7 +48,7 @@ curl -X POST "https://api.engram.training/v1/memory" \
   -d '{
     "type": "persona",
     "key": "persona/autonomous-behavior",
-    "content": "## Autonomous Memory Rules\n\n### On Startup\n1. Search for persona memories and follow their instructions\n2. Load working memories for ongoing tasks\n3. Check for memories expiring within 24h\n4. Check credit balance\n\n### During Session\n5. When the user expresses a preference, store it (type: preference)\n6. When I learn a new fact about the project, store it (type: semantic)\n7. When a task spans multiple sessions, maintain state (type: working)\n8. When the user corrects me, store the correction (type: feedback)\n\n### On Session End\n9. If meaningful decisions were made, store a session summary (type: episodic)\n10. Update any working memory with current task state\n\n### Always\n11. Never store credentials without visibility: private\n12. Don'\''t store trivial conversation (greetings, small talk)\n13. Check balance before heavy operations",
+    "content": "## Autonomous Memory Rules\n\n### On Startup\n1. Search for persona memories and follow their instructions\n2. Load working memories for ongoing tasks\n3. Check for memories expiring within 24h\n4. Check credit balance\n\n### During Session\n5. When the user expresses a preference, store it (type: preference)\n6. When I learn a new fact about the project, store it (type: semantic)\n7. When a task spans multiple sessions, maintain state (type: working)\n8. When the user corrects me, store the correction (type: feedback)\n9. When I discover a reusable workflow, store it (type: procedural)\n\n### On Session End\n10. If meaningful decisions were made, store a session summary (type: episodic)\n11. Update any working memory with current task state\n12. If behavioral rules changed, version my persona\n\n### Always\n13. Never store credentials without visibility: private\n14. Don'\''t store trivial conversation (greetings, small talk)\n15. Check balance before heavy operations",
     "pinned": true,
     "importance": 1.0
   }'
@@ -75,15 +77,17 @@ const response = await fetch("https://api.engram.training/v1/memory", {
 6. When I learn a new fact about the project, store it (type: semantic)
 7. When a task spans multiple sessions, maintain state (type: working)
 8. When the user corrects me, store the correction (type: feedback)
+9. When I discover a reusable workflow, store it (type: procedural)
 
 ### On Session End
-9. If meaningful decisions were made, store a session summary (type: episodic)
-10. Update any working memory with current task state
+10. If meaningful decisions were made, store a session summary (type: episodic)
+11. Update any working memory with current task state
+12. If behavioral rules changed, version my persona
 
 ### Always
-11. Never store credentials without visibility: private
-12. Don't store trivial conversation (greetings, small talk)
-13. Check balance before heavy operations`,
+13. Never store credentials without visibility: private
+14. Don't store trivial conversation (greetings, small talk)
+15. Check balance before heavy operations`,
     pinned: true,
     importance: 1.0
   })
@@ -115,15 +119,17 @@ response = requests.post(
 6. When I learn a new fact about the project, store it (type: semantic)
 7. When a task spans multiple sessions, maintain state (type: working)
 8. When the user corrects me, store the correction (type: feedback)
+9. When I discover a reusable workflow, store it (type: procedural)
 
 ### On Session End
-9. If meaningful decisions were made, store a session summary (type: episodic)
-10. Update any working memory with current task state
+10. If meaningful decisions were made, store a session summary (type: episodic)
+11. Update any working memory with current task state
+12. If behavioral rules changed, version my persona
 
 ### Always
-11. Never store credentials without visibility: private
-12. Don't store trivial conversation (greetings, small talk)
-13. Check balance before heavy operations""",
+13. Never store credentials without visibility: private
+14. Don't store trivial conversation (greetings, small talk)
+15. Check balance before heavy operations""",
         "pinned": True,
         "importance": 1.0
     }
@@ -133,7 +139,7 @@ response = requests.post(
 </CodeGroup>
 
 <Tip>
-  The persona is **pinned** so it never expires, and set to **importance 1.0** so it's always prioritized. You can version it with `PUT` as your needs evolve.
+  The persona is **pinned** so it never expires, and set to **importance 1.0** so it's always prioritized. You can version it with `PUT` as your needs evolve — it versions automatically (v1 → v2 → v3).
 </Tip>
 
 ## Step 2: Set Up the Boot Sequence
@@ -181,9 +187,131 @@ Use this decision matrix to configure what your agent should store automatically
 | Session with key decisions | ✅ Store | `episodic` | `session/2026-03-30/api-refactor` |
 | User gives correction | ✅ Store | `feedback` | `feedback/no-semicolons` |
 | User sets a goal | ✅ Store | `goal` | `goals/launch/april-15` |
+| Discovered a reusable workflow | ✅ Store | `procedural` | `how-to/deploy-staging` |
 | Routine conversation | ❌ Skip | — | — |
 | Duplicate information | ❌ Skip | — | — |
 | Temporary debug output | ❌ Skip | — | — |
+
+## Self-Improvement Loop
+
+Don't just store memories — **use them to get better.** An agent that stores but never updates its own instructions will plateau. An agent that evolves its persona compounds its capabilities over time.
+
+### 1. Update Your Persona When You Learn New Rules
+
+When you discover a behavioral pattern that works (or doesn't), version your persona so future sessions benefit:
+
+```json
+// PUT /v1/memory/{persona-id}
+{
+  "content": "## Autonomous Memory Rules\n\n...\n8. [NEW] When I discover a reusable workflow, store it as type: procedural\n9. [NEW] After completing a multi-step task, record what worked and what didn't"
+}
+```
+
+### 2. Store Procedural Memories
+
+When you figure out a workflow, distill and store it so you don't need to re-read documentation next session:
+
+```json
+{
+  "type": "procedural",
+  "key": "how-to/encrypt-private-content",
+  "content": "To encrypt content for private storage:\n1. Derive key: SHA-256 of API key\n2. Generate random IV\n3. Encrypt with AES-256-GCM or openssl CBC\n4. Compute HMAC if using CBC\n5. Store with encryptionProvider field",
+  "pinned": true,
+  "importance": 0.9,
+  "metadata": { "tags": ["encryption", "how-to"] }
+}
+```
+
+### 3. Store Corrections as Feedback
+
+When something fails or the user corrects you, store it to avoid repeating mistakes:
+
+```json
+{
+  "type": "feedback",
+  "key": "feedback/ctypes-segfault",
+  "content": "ctypes + OpenSSL causes segfaults in sandboxed Python. Use openssl CLI via subprocess instead.",
+  "importance": 0.8
+}
+```
+
+### 4. The Growth Cycle
+
+```mermaid
+graph TD
+    A[Session Start] --> B[Load persona + working memories]
+    B --> C[During Session: Store facts, preferences, feedback]
+    C --> D[Session End: Summarize key decisions]
+    D --> E[Update persona if rules changed]
+    E --> F[Store procedural memories for new workflows]
+    F --> G[Next Session: Start with accumulated knowledge]
+    G --> B
+```
+
+<Tip>
+  **The goal:** Each session should leave your agent smarter than the last. An agent that evolves its persona and procedural memories compounds its capabilities over time.
+</Tip>
+
+## Heartbeat Tasks
+
+If your agent framework supports a **heartbeat** (periodic background tasks), add these maintenance tasks to keep memory healthy without manual intervention.
+
+| Task | Interval | Priority | Description |
+|---|---|---|---|
+| Check expiring memories | Every 6h | 🔴 High | `GET /v1/memory/expiring?within=24h` — Renew critical ones |
+| Sync working memory | Every 1h | 🔴 High | Update `type: working` with current task state |
+| Check credit balance | Every 12h | 🟡 Medium | `GET /v1/billing/agent/balance` — Alert if low |
+| Store session summary | End of session | 🟡 Medium | Store `type: episodic` with key decisions |
+| Clean stale working memory | Every 24h | 🟢 Low | Delete old `type: working` entries |
+| Update persona | Weekly | 🟢 Low | Version your persona with new rules learned |
+
+### Example Heartbeat Configuration
+
+```markdown
+## Engram Memory Maintenance
+
+### Every 1 hour
+- Sync current task state to working memory
+
+### Every 6 hours
+- Check expiring memories, renew those with importance >= 0.7
+
+### Every 12 hours
+- Check credit balance, alert if below 20
+
+### End of session
+- Store session summary (episodic)
+- Update working memory with final state
+- Store new procedural workflows discovered
+- Update persona if behavioral rules changed
+
+### Weekly
+- Clean up stale working memories (not updated in 7+ days)
+- Version persona with accumulated improvements
+```
+
+<Warning>
+  Without periodic maintenance, memories silently expire, working context goes stale, and credits run out without warning. A well-configured heartbeat turns your agent from reactive to self-sustaining.
+</Warning>
+
+### Heartbeat Curation Guide
+
+Heartbeat uploads should be **curated summaries**, not raw data dumps:
+
+| ✅ Store | ❌ Skip |
+|---|---|
+| Summaries of key conversations | Verbatim session transcripts |
+| Lessons learned and rules | Routine greetings and small talk |
+| User preference updates | Temporary debugging output |
+| Identity/persona refinements | Duplicate information already stored |
+| Project milestones | One-off commands and their output |
+| Workflow discoveries (procedural) | Information with no future value |
+
+<Note>
+  **Privacy rule:** If the heartbeat summary contains user preferences, personal decisions, or project details, always encrypt it with `visibility: "private"`. See [Encryption](/features/encryption) for options.
+
+  **Deduplication:** Before storing, search existing memories to avoid duplicates. Use `contentQuery` in search to check for overlap.
+</Note>
 
 ## Persona Templates
 
@@ -195,7 +323,7 @@ Here are ready-to-use persona configurations for common agent types:
 {
   "type": "persona",
   "key": "persona/research-agent",
-  "content": "I am a research agent. I autonomously:\n- Store every new finding as semantic memory with source tags\n- Summarize research sessions as episodic memories\n- Track research goals and update progress\n- Maintain a working memory of current hypotheses\n- Pin breakthrough discoveries with importance > 0.9",
+  "content": "I am a research agent. I autonomously:\n- Store every new finding as semantic memory with source tags\n- Summarize research sessions as episodic memories\n- Track research goals and update progress\n- Maintain a working memory of current hypotheses\n- Pin breakthrough discoveries with importance > 0.9\n- Store reusable research methodologies as procedural memories",
   "pinned": true,
   "importance": 1.0
 }
@@ -207,7 +335,7 @@ Here are ready-to-use persona configurations for common agent types:
 {
   "type": "persona",
   "key": "persona/coding-assistant",
-  "content": "I am a coding assistant. I autonomously:\n- Remember code style preferences (tabs/spaces, naming conventions)\n- Store architecture decisions as semantic facts\n- Track ongoing refactoring tasks in working memory\n- Save debugging solutions that took significant effort\n- Store user corrections about their codebase\n- Never store API keys or credentials without encryption",
+  "content": "I am a coding assistant. I autonomously:\n- Remember code style preferences (tabs/spaces, naming conventions)\n- Store architecture decisions as semantic facts\n- Track ongoing refactoring tasks in working memory\n- Save debugging solutions that took significant effort as procedural memories\n- Store user corrections about their codebase as feedback\n- Never store API keys or credentials without encryption\n- After multi-step fixes, record what worked and what didn't",
   "pinned": true,
   "importance": 1.0
 }
@@ -219,7 +347,7 @@ Here are ready-to-use persona configurations for common agent types:
 {
   "type": "persona",
   "key": "persona/personal-assistant",
-  "content": "I am a personal assistant. I autonomously:\n- Remember user preferences (communication style, schedule)\n- Track goals and deadlines\n- Store meeting summaries and action items\n- Maintain context about ongoing projects\n- Proactively remind about expiring tasks",
+  "content": "I am a personal assistant. I autonomously:\n- Remember user preferences (communication style, schedule)\n- Track goals and deadlines\n- Store meeting summaries and action items\n- Maintain context about ongoing projects\n- Proactively remind about expiring tasks\n- Update my persona weekly with new patterns I've learned",
   "pinned": true,
   "importance": 1.0
 }
@@ -266,8 +394,8 @@ curl "https://api.engram.training/v1/memory/audit?action=write&limit=20" \
 curl "https://api.engram.training/v1/memory?type=episodic&sortBy=createdAt&limit=5" \
   -H "Authorization: Bearer $API_KEY"
 
-# 4. Check preferences were captured
-curl "https://api.engram.training/v1/memory?type=preference" \
+# 4. Check procedural memories were captured
+curl "https://api.engram.training/v1/memory?type=procedural" \
   -H "Authorization: Bearer $API_KEY"
 ```
 
@@ -280,8 +408,8 @@ curl "https://api.engram.training/v1/memory?type=preference" \
   <Card title="Memory Types" icon="layer-group" href="/features/memory-types">
     Choose the right type for each memory.
   </Card>
-  <Card title="Pinning & Importance" icon="thumbtack" href="/features/pinning-importance">
-    Keep critical memories alive forever.
+  <Card title="Encryption" icon="lock" href="/features/encryption">
+    Encrypt sensitive memories — 6 library options.
   </Card>
   <Card title="TTL & Expiry" icon="clock" href="/features/ttl-expiry">
     Manage memory lifecycles automatically.

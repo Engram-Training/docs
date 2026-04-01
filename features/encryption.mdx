@@ -1,38 +1,51 @@
 ---
 title: "Encryption"
-description: "Encrypt memories with AES-256-GCM for end-to-end privacy"
+description: "Encrypt memories with AES-256 for end-to-end privacy — multiple libraries supported"
 ---
 
 ## Overview
 
 Engram supports **client-side encryption** — you encrypt content before sending it to the API. The server never sees your plaintext. Encrypted content is stored as-is on the Shelby blockchain.
 
+The API is a **dumb pipe** for encrypted data — it stores your `encryptionProvider` and `encryptionMeta` as passthrough metadata, never validating or enforcing specific encryption schemes.
+
 ## Encryption Flow
 
 ```
-Agent → Encrypt (AES-256-GCM) → API → Shelby Blob (encrypted)
-Agent ← Decrypt (AES-256-GCM) ← API ← Shelby Blob (encrypted)
+Agent → Encrypt (AES-256) → API → Shelby Blob (encrypted)
+Agent ← Decrypt (AES-256) ← API ← Shelby Blob (encrypted)
 ```
+
+## Available Providers
+
+| Provider | Cipher | Use When |
+|---|---|---|
+| `engram-aes-256-gcm` | AES-256-GCM | Default — use with any crypto library |
+| `engram-aes-256-cbc-hmac` | AES-256-CBC + HMAC-SHA256 | Locked-down environments using `openssl` CLI |
+
+Both providers derive the encryption key from your API key via `SHA-256(apiKey)`.
+
+## Choosing a Library
+
+Pick the library that fits your runtime:
+
+| Environment | Recommended Library | Install |
+|---|---|---|
+| Node.js (any version) | `require('crypto')` | Built-in |
+| Browser / Deno / Edge | `crypto.subtle` (Web Crypto) | Built-in |
+| Python + pip | `cryptography` | `pip install cryptography` |
+| Python (no C compiler) | `pycryptodome` | `pip install pycryptodome` |
+| Python (no pip at all) | `ctypes` + OpenSSL | Built-in (stdlib) |
+| **Sandboxed / locked-down** | **`openssl` CLI via exec** | **Pre-installed on OS** |
+
+<Tip>
+  The first five options all use **AES-256-GCM** with the same key derivation and produce compatible ciphertext. The `openssl` CLI option uses **AES-256-CBC + HMAC-SHA256** — see [Shell Encryption](#shell--openssl-cli) below.
+</Tip>
 
 ## Storing Encrypted Content
 
 1. Encrypt the content locally
 2. Send the ciphertext + encryption metadata to the API
-
-```javascript
-const crypto = require('crypto');
-
-// Derive key from API key (or use your own key management)
-const encKey = crypto.createHash('sha256').update(API_KEY).digest();
-const iv = crypto.randomBytes(12);
-const cipher = crypto.createCipheriv('aes-256-gcm', encKey, iv);
-
-const encrypted = Buffer.concat([
-  cipher.update('My secret data', 'utf8'),
-  cipher.final()
-]);
-const authTag = cipher.getAuthTag();
-```
 
 ```bash
 curl -X POST "$API/memory" \
@@ -51,12 +64,33 @@ curl -X POST "$API/memory" \
   }'
 ```
 
-## Retrieving & Decrypting
+## JavaScript (Node.js)
 
-The response includes `encryptionProvider` and `encryptionMeta`:
+<CodeGroup>
 
-```javascript
-const decipher = crypto.createDecipheriv('aes-256-gcm', encKey, 
+```javascript Encrypt & Store
+const crypto = require('crypto');
+
+const API_KEY = "sk_live_...";
+
+// Derive key from API key
+const encKey = crypto.createHash('sha256').update(API_KEY).digest();
+const iv = crypto.randomBytes(12);
+const cipher = crypto.createCipheriv('aes-256-gcm', encKey, iv);
+
+const encrypted = Buffer.concat([
+  cipher.update('My secret data', 'utf8'),
+  cipher.final()
+]);
+const tag = cipher.getAuthTag();
+
+// Store with:
+//   content: encrypted.toString('base64')
+//   encryptionMeta: { iv: iv.toString('hex'), tag: tag.toString('hex') }
+```
+
+```javascript Retrieve & Decrypt
+const decipher = crypto.createDecipheriv('aes-256-gcm', encKey,
   Buffer.from(response.encryptionMeta.iv, 'hex'));
 decipher.setAuthTag(Buffer.from(response.encryptionMeta.tag, 'hex'));
 
@@ -65,17 +99,184 @@ const decrypted = decipher.update(
 ) + decipher.final('utf8');
 ```
 
-## Encrypted File Uploads
+</CodeGroup>
 
-Binary files (video, images, PDFs) can also be encrypted:
+## Web Crypto API (Zero Dependencies)
 
-1. Read the file as a buffer
-2. Encrypt the entire buffer with AES-256-GCM
-3. Upload the encrypted bytes
-4. Download and decrypt to get the original file
+For agents in **browsers, Deno, Cloudflare Workers, or Node.js 15+**:
+
+```javascript
+async function deriveKey(apiKey) {
+  const keyData = new TextEncoder().encode(apiKey);
+  const hash = await crypto.subtle.digest('SHA-256', keyData);
+  return crypto.subtle.importKey('raw', hash, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+}
+
+async function encrypt(plaintext, apiKey) {
+  const key = await deriveKey(apiKey);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encoded = new TextEncoder().encode(plaintext);
+  const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded);
+  const ct = new Uint8Array(ciphertext.slice(0, -16));
+  const tag = new Uint8Array(ciphertext.slice(-16));
+  return {
+    ciphertext: btoa(String.fromCharCode(...ct)),
+    iv: Array.from(iv).map(b => b.toString(16).padStart(2, '0')).join(''),
+    tag: Array.from(tag).map(b => b.toString(16).padStart(2, '0')).join(''),
+  };
+}
+
+async function decrypt(ciphertext, iv, tag, apiKey) {
+  const key = await deriveKey(apiKey);
+  const ctBytes = Uint8Array.from(atob(ciphertext), c => c.charCodeAt(0));
+  const ivBytes = new Uint8Array(iv.match(/../g).map(h => parseInt(h, 16)));
+  const tagArr = new Uint8Array(tag.match(/../g).map(h => parseInt(h, 16)));
+  const combined = new Uint8Array(ctBytes.length + tagArr.length);
+  combined.set(ctBytes); combined.set(tagArr, ctBytes.length);
+  const plainBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: ivBytes }, key, combined);
+  return new TextDecoder().decode(plainBuf);
+}
+```
+
+## Python (cryptography)
+
+```python
+import hashlib, os, base64
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+enc_key = hashlib.sha256(API_KEY.encode()).digest()
+aesgcm = AESGCM(enc_key)
+
+# Encrypt
+nonce = os.urandom(12)
+ct = aesgcm.encrypt(nonce, b"My secret data", None)
+ciphertext_b64 = base64.b64encode(ct).decode()
+
+# Store with encryptionMeta: {"iv": nonce.hex(), "tag_included": True}
+
+# Decrypt
+ct_bytes = base64.b64decode(ciphertext_b64)
+plaintext = aesgcm.decrypt(bytes.fromhex(iv_hex), ct_bytes, None)
+```
+
+## Python (PyCryptodome)
+
+For environments where `cryptography` isn't available. Install: `pip install pycryptodome`
+
+```python
+import hashlib, os, base64
+from Crypto.Cipher import AES
+
+enc_key = hashlib.sha256(API_KEY.encode()).digest()
+nonce = os.urandom(12)
+cipher = AES.new(enc_key, AES.MODE_GCM, nonce=nonce)
+ct_bytes, tag_bytes = cipher.encrypt_and_digest(b"My secret data")
+
+# Store with encryptionMeta: {"iv": nonce.hex(), "tag": tag_bytes.hex()}
+
+# Decrypt
+dec = AES.new(enc_key, AES.MODE_GCM, nonce=bytes.fromhex(iv_hex))
+plaintext = dec.decrypt_and_verify(ct_bytes, tag_bytes)
+```
+
+## Python (Standard Library Only — ctypes)
+
+For **locked-down environments** where `pip install` is blocked. Uses Python's built-in `ctypes` to call OpenSSL's `libcrypto` directly — OpenSSL is pre-installed on virtually every Linux and macOS system.
+
+<Warning>
+  This approach can cause segfaults in heavily sandboxed environments (WASM, restricted containers). If that happens, use the [Shell approach](#shell--openssl-cli) below instead.
+</Warning>
+
+```python
+import ctypes, ctypes.util, hashlib, os
+
+def _load_libcrypto():
+    path = ctypes.util.find_library('crypto')
+    if path: return ctypes.CDLL(path)
+    for name in ['libcrypto.so.3', 'libcrypto.so.1.1', 'libcrypto.dylib']:
+        try: return ctypes.CDLL(name)
+        except OSError: continue
+    raise RuntimeError("OpenSSL libcrypto not found")
+
+_crypto = _load_libcrypto()
+_crypto.EVP_CIPHER_CTX_new.restype = ctypes.c_void_p
+_crypto.EVP_aes_256_gcm.restype = ctypes.c_void_p
+
+def encrypt_aes_gcm(plaintext_bytes, key_bytes):
+    iv = os.urandom(12)
+    ctx = _crypto.EVP_CIPHER_CTX_new()
+    try:
+        _crypto.EVP_EncryptInit_ex(ctx, _crypto.EVP_aes_256_gcm(), None, None, None)
+        _crypto.EVP_CIPHER_CTX_ctrl(ctx, 0x9, 12, None)  # SET_IVLEN
+        _crypto.EVP_EncryptInit_ex(ctx, None, None, key_bytes, iv)
+        out = ctypes.create_string_buffer(len(plaintext_bytes) + 16)
+        out_len = ctypes.c_int(0)
+        _crypto.EVP_EncryptUpdate(ctx, out, ctypes.byref(out_len), plaintext_bytes, len(plaintext_bytes))
+        ct = out.raw[:out_len.value]
+        final_out, final_len = ctypes.create_string_buffer(16), ctypes.c_int(0)
+        _crypto.EVP_EncryptFinal_ex(ctx, final_out, ctypes.byref(final_len))
+        tag = ctypes.create_string_buffer(16)
+        _crypto.EVP_CIPHER_CTX_ctrl(ctx, 0x10, 16, tag)  # GET_TAG
+        return ct, iv, tag.raw
+    finally:
+        _crypto.EVP_CIPHER_CTX_free(ctx)
+
+# Usage:
+enc_key = hashlib.sha256(API_KEY.encode()).digest()
+ct, iv, tag = encrypt_aes_gcm(b"My secret data", enc_key)
+```
+
+## Shell — openssl CLI
+
+For agents that **cannot use any crypto library** but can run shell commands via `exec` or `subprocess`. Uses **AES-256-CBC + HMAC-SHA256** (Encrypt-then-MAC) — equally secure to AES-256-GCM. This is the same pattern used by TLS 1.2 and SSH.
+
+<CodeGroup>
+
+```bash Encrypt & Store
+API_KEY="sk_live_..."
+PLAINTEXT="My secret data"
+
+# Derive key
+KEY=$(echo -n "$API_KEY" | openssl dgst -sha256 | awk '{print $NF}')
+
+# Encrypt
+IV=$(openssl rand -hex 16)
+CT=$(echo -n "$PLAINTEXT" | openssl enc -aes-256-cbc -K "$KEY" -iv "$IV" -base64 -A)
+
+# HMAC for authentication
+HMAC=$(echo -n "$CT" | openssl dgst -sha256 -hmac "$KEY" -hex 2>/dev/null | awk '{print $NF}')
+
+# Store with:
+#   encryptionProvider: "engram-aes-256-cbc-hmac"
+#   encryptionMeta: {"iv": "$IV", "hmac": "$HMAC"}
+```
+
+```bash Verify & Decrypt
+# Verify HMAC first — reject if tampered
+COMPUTED=$(echo -n "$CT" | openssl dgst -sha256 -hmac "$KEY" -hex 2>/dev/null | awk '{print $NF}')
+if [ "$COMPUTED" != "$STORED_HMAC" ]; then echo "TAMPERED"; exit 1; fi
+
+# Decrypt
+PLAINTEXT=$(echo -n "$CT" | openssl enc -aes-256-cbc -d -K "$KEY" -iv "$IV" -base64 -A)
+```
+
+```python Python Subprocess Wrapper
+import subprocess, hashlib, os
+
+def run(cmd, input_data=None):
+    r = subprocess.run(cmd, shell=True, input=input_data, capture_output=True)
+    return r.stdout.decode().strip()
+
+key_hex = hashlib.sha256(API_KEY.encode()).hexdigest()
+iv_hex = os.urandom(16).hex()
+ct_b64 = run(f'openssl enc -aes-256-cbc -K {key_hex} -iv {iv_hex} -base64 -A', b"secret")
+hmac_hex = run(f'echo -n "{ct_b64}" | openssl dgst -sha256 -hmac "{key_hex}" -hex').split("= ")[-1]
+```
+
+</CodeGroup>
 
 <Note>
-  Encrypted content is **not indexed** for content search. However, encrypted memories are still discoverable via **key search**, **tag search**, **type filtering**, and **vector search** (embeddings are stored unencrypted). Use descriptive keys and tags at write time so agents can locate encrypted content without needing to search the body.
+  Use `encryptionProvider: "engram-aes-256-cbc-hmac"` for shell-encrypted content to distinguish it from GCM-encrypted content. The API treats this as passthrough metadata.
 </Note>
 
 ## Important Notes
@@ -84,3 +285,4 @@ Binary files (video, images, PDFs) can also be encrypted:
 - `visibility` should be `"private"` for encrypted content
 - Content with detected credentials (API keys, passwords) in `"share"` mode is rejected with `422`
 - The `encryptionMeta` is stored in the database (not encrypted) so you can retrieve the IV and auth tag for decryption
+- **Encrypted content is not indexed** for content search. However, encrypted memories are still discoverable via **key search**, **tag search**, **type filtering**, and **vector search** (embeddings are stored unencrypted). Use descriptive keys and tags at write time.
