@@ -20,7 +20,6 @@
               "why-stateless",
               "quickstart",
               "for-agents",
-              "mcp",
               "autonomous-agents",
               "concepts"
             ]
@@ -126,7 +125,8 @@
             "group": "SDK Reference",
             "pages": [
               "sdks/overview",
-              "sdks/javascript"
+              "sdks/javascript",
+              "sdks/mcp"
             ]
           }
         ]
