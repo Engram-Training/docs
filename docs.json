@@ -125,8 +125,7 @@
             "group": "SDK Reference",
             "pages": [
               "sdks/overview",
-              "sdks/javascript",
-              "sdks/python"
+              "sdks/javascript"
             ]
           }
         ]

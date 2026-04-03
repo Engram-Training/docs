@@ -3,16 +3,25 @@ title: "SDK Overview"
 description: "Client libraries for integrating Engram into your agent"
 ---
 
-## Available SDKs
+## JavaScript / TypeScript SDK
 
-<CardGroup cols={2}>
-  <Card title="JavaScript / TypeScript" icon="js" href="/sdks/javascript">
-    Full-featured SDK for Node.js and browser environments.
-  </Card>
-  <Card title="Python" icon="python" href="/sdks/python">
-    SDK for Python agents and data pipelines.
-  </Card>
-</CardGroup>
+The official SDK for Node.js 18+ and browser environments. Zero runtime dependencies.
+
+```bash
+npm install @engramtraining/sdk
+```
+
+```typescript
+import { Engram } from '@engramtraining/sdk';
+
+const engram = new Engram({
+  apiKey: process.env.ENGRAM_API_KEY!,
+});
+```
+
+<Card title="JavaScript / TypeScript SDK" icon="js" href="/sdks/javascript">
+  Full reference with examples for every method.
+</Card>
 
 ## Direct API Access
 
