@@ -232,7 +232,7 @@ All memory content stored through the MCP server is **automatically encrypted cl
 The encryption metadata (IV, salt, tag) is stored alongside the memory so decryption works transparently. **The Engram server never sees your plaintext content.**
 
 <Note>
-  The MCP server uses PBKDF2-based key derivation (more secure for key stretching), while the [JS SDK](/sdks/javascript) uses SHA-256 direct hashing. Both produce AES-256-GCM ciphertext but are **not cross-compatible** — memories encrypted via MCP should be decrypted via MCP, and vice versa.
+  The MCP server and the [JS SDK](/sdks/javascript) use the same encryption format — PBKDF2 key derivation, AES-256-GCM, base64-encoded ciphertext. Memories encrypted via MCP can be decrypted with the SDK and vice versa.
 </Note>
 
 ## Memory Types

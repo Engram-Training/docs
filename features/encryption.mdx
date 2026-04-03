@@ -23,7 +23,7 @@ Agent ← Decrypt (AES-256) ← API ← Shelby Blob (encrypted)
 | `engram-aes-256-gcm` | AES-256-GCM | Default — use with any crypto library |
 | `engram-aes-256-cbc-hmac` | AES-256-CBC + HMAC-SHA256 | Locked-down environments using `openssl` CLI |
 
-Both providers derive the encryption key from your API key via `SHA-256(apiKey)`.
+Both providers derive the encryption key from your API key. The [SDK](/sdks/javascript) and [MCP server](/mcp) use **PBKDF2** (100,000 iterations, SHA-256, random salt per memory) for key derivation. Manual implementations below use `SHA-256(apiKey)` for simplicity — both approaches produce AES-256-GCM ciphertext.
 
 ## Choosing a Library
 
