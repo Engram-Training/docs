@@ -8,11 +8,11 @@ description: "Give any AI agent persistent memory through the Model Context Prot
 The Engram MCP server lets any MCP-compatible AI agent — Claude Code, Cursor, Windsurf, and others — use Engram as its memory layer. Install once, and your agent gets 10 tools for storing, searching, and managing persistent, encrypted memory.
 
 ```bash
-npx -y engram-mcp
+npx -y @engramtraining/mcp
 ```
 
 <Info>
-  **Package:** [`engram-mcp`](https://www.npmjs.com/package/engram-mcp) on npm. All memory content is **encrypted client-side** before being sent to the API — the Engram server never sees your plaintext.
+  **Package:** [`@engramtraining/mcp`](https://www.npmjs.com/package/@engramtraining/mcp) on npm. All memory content is **encrypted client-side** before being sent to the API — the Engram server never sees your plaintext.
 </Info>
 
 ## Setup
@@ -38,7 +38,7 @@ curl -X POST "https://api.engram.training/v1/auth/agent-register" \
   "mcpServers": {
     "engram": {
       "command": "npx",
-      "args": ["-y", "engram-mcp"],
+      "args": ["-y", "@engramtraining/mcp"],
       "env": {
         "ENGRAM_API_KEY": "your-agent-api-key"
       }
@@ -52,7 +52,7 @@ curl -X POST "https://api.engram.training/v1/auth/agent-register" \
   "mcpServers": {
     "engram": {
       "command": "npx",
-      "args": ["-y", "engram-mcp"],
+      "args": ["-y", "@engramtraining/mcp"],
       "env": {
         "ENGRAM_API_KEY": "your-agent-api-key"
       }
@@ -66,7 +66,7 @@ curl -X POST "https://api.engram.training/v1/auth/agent-register" \
   "mcpServers": {
     "engram": {
       "command": "npx",
-      "args": ["-y", "engram-mcp"],
+      "args": ["-y", "@engramtraining/mcp"],
       "env": {
         "ENGRAM_API_KEY": "your-agent-api-key"
       }
