@@ -1,0 +1,291 @@
+---
+title: "MCP Server"
+description: "Give any AI agent persistent memory through the Model Context Protocol"
+---
+
+## Overview
+
+The Engram MCP server lets any MCP-compatible AI agent — Claude Code, Cursor, Windsurf, and others — use Engram as its memory layer. Install once, and your agent gets 10 tools for storing, searching, and managing persistent, encrypted memory.
+
+```bash
+npx -y engram-mcp
+```
+
+<Info>
+  **Package:** [`engram-mcp`](https://www.npmjs.com/package/engram-mcp) on npm. All memory content is **encrypted client-side** before being sent to the API — the Engram server never sees your plaintext.
+</Info>
+
+## Setup
+
+### 1. Get an API Key
+
+Create an agent at [engram.training/dashboard](https://engram.training/dashboard) and copy the agent's API key.
+
+Or self-register via terminal:
+
+```bash
+curl -X POST "https://api.engram.training/v1/auth/agent-register" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "my-agent"}'
+```
+
+### 2. Add to Your IDE
+
+<CodeGroup>
+
+```json Claude Code (.mcp.json)
+{
+  "mcpServers": {
+    "engram": {
+      "command": "npx",
+      "args": ["-y", "engram-mcp"],
+      "env": {
+        "ENGRAM_API_KEY": "your-agent-api-key"
+      }
+    }
+  }
+}
+```
+
+```json Cursor (.cursor/mcp.json)
+{
+  "mcpServers": {
+    "engram": {
+      "command": "npx",
+      "args": ["-y", "engram-mcp"],
+      "env": {
+        "ENGRAM_API_KEY": "your-agent-api-key"
+      }
+    }
+  }
+}
+```
+
+```json Windsurf
+{
+  "mcpServers": {
+    "engram": {
+      "command": "npx",
+      "args": ["-y", "engram-mcp"],
+      "env": {
+        "ENGRAM_API_KEY": "your-agent-api-key"
+      }
+    }
+  }
+}
+```
+
+```json Local Development
+{
+  "mcpServers": {
+    "engram": {
+      "command": "node",
+      "args": ["./packages/mcp/dist/index.js"],
+      "env": {
+        "ENGRAM_API_KEY": "your-agent-api-key",
+        "ENGRAM_API_URL": "http://localhost:3001"
+      }
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+### 3. Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `ENGRAM_API_KEY` | ✅ | — | Your Engram agent API key |
+| `ENGRAM_API_URL` | ❌ | `https://api.engram.training` | API base URL (for local dev or self-hosted) |
+
+## Tools
+
+Once connected, your agent gets access to **10 tools** across memory, media, and billing.
+
+### Memory Tools
+
+#### `store_memory`
+
+Store a new memory with automatic client-side encryption (AES-256-GCM).
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `type` | string | ✅ | Memory type (see [Memory Types](#memory-types)) |
+| `key` | string | ✅ | Unique key identifier (max 512 chars) |
+| `content` | string | ✅ | Content to store (encrypted automatically) |
+| `metadata` | object | ❌ | Key-value metadata pairs |
+| `importance` | number | ❌ | Importance score (0.0 to 1.0) |
+| `pinned` | boolean | ❌ | Pin to prevent expiration |
+| `expiresIn` | string | ❌ | Time-to-live (e.g. `"1h"`, `"7d"`, `"30d"`) |
+
+---
+
+#### `recall_memory`
+
+Retrieve a memory by UUID and automatically decrypt its content.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | string | ✅ | Memory UUID |
+
+---
+
+#### `search_memories`
+
+Search memories by query text, content, type, or tags.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `query` | string | ❌ | Search query (matches key and metadata) |
+| `contentQuery` | string | ❌ | Search within memory content |
+| `type` | string | ❌ | Filter by memory type |
+| `tags` | string[] | ❌ | Filter by metadata tags |
+| `limit` | number | ❌ | Max results (default 10, max 100) |
+
+---
+
+#### `list_memories`
+
+List memories with optional filters for type, visibility, importance, and pinned status.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `type` | string | ❌ | Filter by memory type |
+| `visibility` | `"private"` \| `"share"` | ❌ | Filter by visibility |
+| `pinned` | boolean | ❌ | Filter pinned memories only |
+| `minImportance` | number | ❌ | Minimum importance threshold (0.0 – 1.0) |
+| `limit` | number | ❌ | Max results (default 50, max 100) |
+| `sortBy` | `"createdAt"` \| `"updatedAt"` \| `"importance"` | ❌ | Sort order |
+
+---
+
+#### `delete_memory`
+
+Permanently delete a memory by its UUID.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | string | ✅ | Memory UUID to delete |
+
+---
+
+#### `check_expiring`
+
+List memories expiring within a given time window. Useful for proactive renewal in [heartbeat tasks](/autonomous-agents#heartbeat-tasks).
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `within` | string | ❌ | Time window (e.g. `"1h"`, `"24h"`, `"7d"`). Default: `"24h"` |
+| `type` | string | ❌ | Filter by memory type |
+
+---
+
+#### `get_audit_log`
+
+View the audit trail of memory operations (reads, writes, deletes) for this agent.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `action` | string | ❌ | Filter by action type (e.g. `"read"`, `"write"`, `"delete"`) |
+| `limit` | number | ❌ | Max results (default 50, max 100) |
+
+### Media Tools
+
+#### `upload_media`
+
+Upload a file to Engram media storage. Content must be base64-encoded.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `type` | string | ✅ | Memory type for this media |
+| `key` | string | ✅ | Unique key for this media entry |
+| `content` | string | ✅ | Base64-encoded file content |
+| `filename` | string | ✅ | Original filename (e.g. `"report.pdf"`) |
+| `mimeType` | string | ✅ | MIME type (e.g. `"application/pdf"`, `"image/png"`) |
+| `metadata` | object | ❌ | Optional metadata |
+
+### Billing Tools
+
+#### `get_balance`
+
+Check your credit balance, USD value, and credits used this month. No parameters required.
+
+---
+
+#### `get_pricing`
+
+View credit pricing and per-operation costs (read, write, update, delete). No parameters required.
+
+## Encryption
+
+All memory content stored through the MCP server is **automatically encrypted client-side** before being sent to the API.
+
+| Property | Value |
+|----------|-------|
+| **Algorithm** | AES-256-GCM |
+| **Key derivation** | PBKDF2 (100,000 iterations, SHA-256) |
+| **Per-memory** | Unique random salt (128-bit) and IV (96-bit) |
+| **Auth tag** | 128-bit GCM authentication tag |
+| **Decryption** | Automatic when using `recall_memory` |
+
+The encryption metadata (IV, salt, tag) is stored alongside the memory so decryption works transparently. **The Engram server never sees your plaintext content.**
+
+<Note>
+  The MCP server uses PBKDF2-based key derivation (more secure for key stretching), while the [JS SDK](/sdks/javascript) uses SHA-256 direct hashing. Both produce AES-256-GCM ciphertext but are **not cross-compatible** — memories encrypted via MCP should be decrypted via MCP, and vice versa.
+</Note>
+
+## Memory Types
+
+The MCP server supports all 13 built-in memory types:
+
+| Type | Use For |
+|------|---------|
+| `persona` | Agent identity, system prompt, behavioral rules |
+| `episodic` | Conversation summaries, session logs |
+| `semantic` | Learned facts, knowledge, project context |
+| `working` | Current session state, task progress |
+| `tool_output` | Results from tool executions |
+| `file` | Documents, images, PDFs |
+| `procedural` | Reusable workflows, how-to guides |
+| `preference` | User preferences, settings |
+| `goal` | Objectives, task tracking, deadlines |
+| `feedback` | User corrections, behavioral adjustments |
+| `relational` | Relationships between entities |
+| `checkpoint` | Resumable state snapshots |
+| `embedding` | Vector embeddings for RAG |
+
+## Usage Examples
+
+Once the MCP server is connected, your AI agent can use the tools naturally:
+
+> **You:** "Remember that this project uses PostgreSQL 16 on port 5433"
+>
+> **Agent:** *calls `store_memory` with type `semantic`, key `facts/db/postgres`, content about PostgreSQL 16 on port 5433*
+
+> **You:** "What do you remember about the database?"
+>
+> **Agent:** *calls `search_memories` with query `database`*
+
+> **You:** "Check if anything is expiring soon"
+>
+> **Agent:** *calls `check_expiring` with within `24h`*
+
+For autonomous memory management, see the [Autonomous Memory](/autonomous-agents) guide — it covers persona setup, boot sequences, and heartbeat tasks that work directly with these MCP tools.
+
+## What's Next?
+
+<CardGroup cols={2}>
+  <Card title="Autonomous Memory" icon="robot" href="/autonomous-agents">
+    Make your agent proactively manage its own memory.
+  </Card>
+  <Card title="JavaScript SDK" icon="js" href="/sdks/javascript">
+    Use the TypeScript SDK for programmatic access.
+  </Card>
+  <Card title="Encryption" icon="lock" href="/features/encryption">
+    Manual encryption options for non-MCP usage.
+  </Card>
+  <Card title="Full API Reference" icon="terminal" href="/api-reference/introduction">
+    Every endpoint documented with examples.
+  </Card>
+</CardGroup>
