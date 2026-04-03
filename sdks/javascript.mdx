@@ -1,22 +1,25 @@
 ---
-title: "JavaScript SDK"
-description: "Use Engram from Node.js or browser applications"
+title: "JavaScript / TypeScript SDK"
+description: "Official SDK for Node.js and browser environments"
 ---
 
 ## Installation
 
 ```bash
-npm install @engram/sdk
+npm install @engramtraining/sdk
 ```
+
+<Info>
+  **Requirements:** Node.js 18+ (uses native `fetch`). Zero runtime dependencies.
+</Info>
 
 ## Quick Start
 
-```javascript
-import { Engram } from '@engram/sdk';
+```typescript
+import { Engram } from '@engramtraining/sdk';
 
 const engram = new Engram({
-  apiKey: process.env.ENGRAM_API_KEY,
-  baseUrl: 'https://api.engram.training/v1'
+  apiKey: process.env.ENGRAM_API_KEY!,
 });
 
 // Store a memory
@@ -26,71 +29,321 @@ const memory = await engram.store({
   content: 'User name is Alice',
   importance: 0.8,
   expiresIn: '30d',
-  metadata: { tags: ['user'], visibility: 'private' }
+  metadata: { tags: ['user'], visibility: 'private' },
 });
 
 // Retrieve
 const result = await engram.get(memory.id);
-console.log(result.content);
+console.log(result.content); // "User name is Alice"
 
 // Search
-const results = await engram.search({
+const found = await engram.search({
   contentQuery: 'Alice',
-  type: 'semantic'
+  type: 'semantic',
 });
 
-// Update
+// Update (creates version 2)
 await engram.update(memory.id, {
-  content: 'User name is Alice Smith'
+  content: 'User name is Alice Smith',
 });
 
 // Delete
 await engram.delete(memory.id);
 ```
 
-## File Uploads
+## Configuration
 
-```javascript
-const fs = require('fs');
+```typescript
+const engram = new Engram({
+  apiKey: 'sk_live_...',                          // Required
+  baseUrl: 'https://api.engram.training/v1',      // Default
+  timeout: 30000,                                 // Default: 30s
+  fetch: customFetchImplementation,               // Optional: custom fetch
+});
+```
 
+## Listing & Filtering
+
+```typescript
+// List all memories
+const all = await engram.list();
+
+// With filters
+const filtered = await engram.list({
+  type: 'semantic',
+  visibility: 'private',
+  pinned: true,
+  minImportance: 0.7,
+  sortBy: 'importance',
+  limit: 20,
+});
+
+// Cursor-based pagination
+const page1 = await engram.list({ limit: 10 });
+if (page1.hasMore) {
+  const page2 = await engram.list({ limit: 10, cursor: page1.nextCursor });
+}
+```
+
+## Version History
+
+```typescript
+const history = await engram.history(memory.id);
+console.log(`${history.totalVersions} versions of ${history.key}`);
+for (const version of history.versions) {
+  console.log(`v${version.version}: ${version.content}`);
+}
+```
+
+## File Upload & Download
+
+```typescript
+import { readFileSync, writeFileSync } from 'fs';
+
+// Upload
 const file = await engram.upload({
-  file: fs.readFileSync('report.pdf'),
+  file: readFileSync('report.pdf'),
   filename: 'report.pdf',
-  type: 'file',
   key: 'docs/quarterly-report',
-  mimeType: 'application/pdf'
+  type: 'file',
+  mimeType: 'application/pdf',
+  expiresIn: '90d',
 });
 
 // Download
 const buffer = await engram.download(file.id);
-fs.writeFileSync('downloaded.pdf', buffer);
-```
-
-## Vector Search
-
-```javascript
-const similar = await engram.vectorSearch({
-  embedding: [0.85, 0.15, 0.25, 0.1, 0.75],
-  threshold: 0.5,
-  limit: 5
-});
+writeFileSync('downloaded.pdf', Buffer.from(buffer));
 ```
 
 ## Encryption
 
-```javascript
-// Store encrypted
-const encrypted = await engram.storeEncrypted({
+Store and retrieve encrypted memories with built-in AES-256-GCM:
+
+```typescript
+// Store encrypted (auto-encrypts with your API key)
+const secret = await engram.storeEncrypted({
   type: 'semantic',
-  key: 'secrets/api-key',
-  content: 'sk_prod_abc123',
-  expiresIn: '90d'
+  key: 'secrets/db-password',
+  content: 's3cret_p@ss!',
 });
 
 // Retrieve and decrypt
-const decrypted = await engram.getDecrypted(encrypted.id);
+const decrypted = await engram.getDecrypted(secret.id);
+console.log(decrypted.content); // "s3cret_p@ss!"
+
+// Update encrypted content (creates new version)
+await engram.updateEncrypted(secret.id, {
+  content: 'new_p@ss!',
+});
 ```
 
-<Note>
-  The JavaScript SDK is currently in development. For now, use the REST API directly with `fetch` or `axios`. The examples above show the planned API surface.
-</Note>
+You can also use the standalone crypto functions directly:
+
+```typescript
+import { encrypt, decrypt, deriveKey } from '@engramtraining/sdk';
+
+const { ciphertext, iv, tag } = encrypt('my secret', apiKey);
+const plaintext = decrypt(ciphertext, iv, tag, apiKey);
+```
+
+## Vector Search
+
+```typescript
+const similar = await engram.vectorSearch({
+  embedding: [0.85, 0.15, 0.25, 0.1, 0.75],
+  type: 'semantic',
+  threshold: 0.7,
+  limit: 5,
+});
+
+for (const result of similar.results) {
+  console.log(`${result.key}: ${result.score.toFixed(3)}`);
+}
+```
+
+## Bulk Operations
+
+```typescript
+// Bulk store (up to 20)
+const result = await engram.bulkStore({
+  memories: [
+    { type: 'semantic', key: 'facts/1', content: 'Fact one' },
+    { type: 'semantic', key: 'facts/2', content: 'Fact two' },
+    { type: 'semantic', key: 'facts/3', content: 'Fact three' },
+  ],
+});
+console.log(`${result.succeeded} stored, ${result.failed} failed`);
+
+// Bulk delete (up to 50)
+await engram.bulkDelete({ ids: ['uuid-1', 'uuid-2'] });
+```
+
+## TTL & Expiry Management
+
+```typescript
+// Check what's expiring
+const expiring = await engram.expiring('24h');
+console.log(`${expiring.count} memories expiring within 24h`);
+
+// Check and renew in one call
+const alerts = await engram.ttlAlerts({
+  within: '24h',
+  renewIds: ['uuid-1', 'uuid-2'],
+  renewExpiresIn: '30d',
+});
+```
+
+## Pin & Importance
+
+```typescript
+// Pin a memory (prevents expiration)
+await engram.pin(memory.id, true);
+
+// Set importance score (0.0 – 1.0)
+await engram.setImportance(memory.id, 0.95);
+
+// List pinned memories
+const pinned = await engram.list({ pinned: true });
+
+// List high-importance memories
+const important = await engram.list({
+  minImportance: 0.8,
+  sortBy: 'importance',
+});
+```
+
+## Audit Trail
+
+```typescript
+const audit = await engram.audit({
+  action: 'write',
+  limit: 20,
+});
+
+for (const log of audit.logs) {
+  console.log(`${log.action} on ${log.memoryId} at ${log.createdAt}`);
+}
+```
+
+## Media Storage
+
+The SDK includes a dedicated media sub-client:
+
+```typescript
+import { readFileSync } from 'fs';
+
+// Upload media
+const photo = await engram.media.upload({
+  file: readFileSync('photo.jpg'),
+  filename: 'photo.jpg',
+  title: 'Profile Photo',
+  pinned: true,
+});
+
+// List media by category
+const media = await engram.media.list({ category: 'photo', limit: 10 });
+
+// Get media metadata
+const record = await engram.media.get(photo.id);
+
+// Stream media (returns raw Response)
+const stream = await engram.media.stream(photo.id);
+
+// Delete media
+await engram.media.delete(photo.id);
+```
+
+## Billing
+
+```typescript
+// Check balance
+const balance = await engram.billing.balance();
+console.log(`${balance.creditBalance} credits ($${balance.creditValueUsd})`);
+
+// Get pricing
+const pricing = await engram.billing.pricing();
+
+// Confirm APT deposit
+const deposit = await engram.billing.deposit({
+  txHash: '0xcf515fe7...',
+});
+console.log(`${deposit.creditsAdded} credits added`);
+```
+
+## Agent Self-Registration
+
+No API key needed — register a new autonomous agent:
+
+```typescript
+import { Engram } from '@engramtraining/sdk';
+
+const agent = await Engram.register({ name: 'my-research-agent' });
+console.log(agent.apiKey);          // sk_live_...
+console.log(agent.rotationSecret);  // sk_live_ROT...
+console.log(agent.creditBalance);   // 100
+
+// Now create a client with the new key
+const engram = new Engram({ apiKey: agent.apiKey });
+```
+
+## Key Rotation
+
+```typescript
+const rotated = await engram.rotateKey({
+  rotationSecret: 'sk_live_ROT...',
+});
+console.log(rotated.apiKey);          // New API key
+console.log(rotated.rotationSecret);  // New rotation secret
+```
+
+## Error Handling
+
+```typescript
+import { Engram, EngramError } from '@engramtraining/sdk';
+
+try {
+  await engram.store({ type: 'semantic', key: 'test', content: 'hello' });
+} catch (err) {
+  if (err instanceof EngramError) {
+    console.log(err.status);    // HTTP status code
+    console.log(err.message);   // Error message
+    console.log(err.retryable); // true for 429/502
+    console.log(err.details);   // Validation errors (for 400s)
+  }
+}
+```
+
+## Full API Reference
+
+| Method | Description |
+|---|---|
+| `store(input)` | Store a new memory |
+| `get(id)` | Retrieve a memory by ID |
+| `update(id, input)` | Update a memory (creates new version) |
+| `delete(id)` | Delete a memory |
+| `list(input?)` | List memories with filters & pagination |
+| `history(id)` | Get version history |
+| `search(input)` | Search by key, content, type, or tags |
+| `vectorSearch(input)` | Semantic similarity search |
+| `bulkStore(input)` | Bulk store up to 20 memories |
+| `bulkDelete(input)` | Bulk delete up to 50 memories |
+| `upload(input)` | Upload a file as memory |
+| `download(id)` | Download a file |
+| `expiring(within?, type?)` | Check expiring memories |
+| `ttlAlerts(input)` | Check & renew TTLs |
+| `pin(id, pinned)` | Toggle pin status |
+| `setImportance(id, score)` | Update importance score |
+| `audit(input?)` | View audit trail |
+| `storeEncrypted(input)` | Encrypt & store |
+| `getDecrypted(id)` | Retrieve & decrypt |
+| `updateEncrypted(id, input)` | Update encrypted content |
+| `rotateKey(input)` | Rotate API key |
+| `Engram.register(input?)` | Agent self-registration (static) |
+| `media.upload(input)` | Upload media file |
+| `media.list(input?)` | List media files |
+| `media.get(id)` | Get media metadata |
+| `media.stream(id)` | Stream media file |
+| `media.delete(id)` | Delete media file |
+| `billing.pricing()` | Get pricing info |
+| `billing.balance()` | Get credit balance |
+| `billing.deposit(input)` | Confirm APT deposit |
