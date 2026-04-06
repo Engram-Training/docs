@@ -1,0 +1,144 @@
+---
+title: "Screen Addresses"
+api: "POST /v1/compliance/screen"
+description: "Screen one or more blockchain addresses against global sanctions lists."
+---
+
+## Request
+
+<ParamField body="addresses" type="array" required>
+  Array of addresses to screen. Maximum 100 per request.
+  <Expandable title="Address Object">
+    <ParamField body="address" type="string" required>
+      The blockchain address to screen.
+    </ParamField>
+    <ParamField body="chain" type="string">
+      Optional chain identifier: `ethereum`, `bitcoin`, `solana`, `polygon`, `bsc`, `arbitrum`, `optimism`, `avalanche`, `aptos`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="includeChainalysis" type="boolean" default="false">
+  Enable Chainalysis API screening for richer global coverage. Works for any chain.
+</ParamField>
+
+<ParamField body="includeCommunity" type="boolean" default="true">
+  Include community-submitted reports in the screening results.
+</ParamField>
+
+## Response
+
+<ResponseField name="results" type="array">
+  <Expandable>
+    <ResponseField name="address" type="string">The screened address.</ResponseField>
+    <ResponseField name="chain" type="string">Chain identifier.</ResponseField>
+    <ResponseField name="status" type="string">
+      One of: `clean`, `sanctioned`, `flagged`, `under_review`.
+    </ResponseField>
+    <ResponseField name="matches" type="array">
+      Array of matches found across data sources.
+      <Expandable>
+        <ResponseField name="entityId" type="string">Unique entity identifier.</ResponseField>
+        <ResponseField name="entityName" type="string">Human-readable entity name (if available).</ResponseField>
+        <ResponseField name="source" type="string">Data source: `ofac_sdn`, `opensanctions`, `chainalysis`, `community`.</ResponseField>
+        <ResponseField name="severity" type="string">`critical`, `high`, `medium`, or `low`.</ResponseField>
+        <ResponseField name="shelbyUrl" type="string">Direct URL to the entity data on Shelby.</ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="screenedAt" type="string">ISO 8601 timestamp.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="proof" type="object">
+  Verifiable screening proof uploaded to Shelby.
+  <Expandable>
+    <ResponseField name="screeningId" type="string">Unique proof identifier. Use with `GET /v1/compliance/proof/:id`.</ResponseField>
+    <ResponseField name="timestamp" type="string">ISO 8601 screening timestamp.</ResponseField>
+    <ResponseField name="resultsHash" type="string">SHA-256 hash of the screening results.</ResponseField>
+    <ResponseField name="dataSources" type="array">Data sources used in this screening.</ResponseField>
+    <ResponseField name="dataSnapshots" type="object">
+      Map of source → `{ blobName, shelbyUrl }` pointing to the exact data snapshot used.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="rateLimit" type="object">
+  Freemium rate limit info.
+  <Expandable>
+    <ResponseField name="freeLimit" type="number">Free addresses per hour (currently 10).</ResponseField>
+    <ResponseField name="freeRemaining" type="number">Free screens remaining this hour.</ResponseField>
+    <ResponseField name="freeReset" type="string">ISO 8601 timestamp when free quota resets.</ResponseField>
+    <ResponseField name="billableAddresses" type="number">Number of addresses charged in this request.</ResponseField>
+    <ResponseField name="creditCharged" type="number">Total credits deducted.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Rate Limiting
+
+First **10 addresses per hour** per developer are free. After that, each address costs 1 credit.
+
+Response headers include:
+```
+X-RateLimit-Free-Limit: 10
+X-RateLimit-Free-Remaining: 7
+X-RateLimit-Free-Reset: 2026-04-06T10:00:00.000Z
+X-RateLimit-Billable: 0
+```
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.engram.training/v1/compliance/screen \
+  -H "Authorization: Bearer sk_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "addresses": [
+      {"address": "12QtD5BFwRsdNsAZY76UVE1xyCGNTojH9h", "chain": "bitcoin"}
+    ],
+    "includeChainalysis": true
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "results": [
+    {
+      "address": "12QtD5BFwRsdNsAZY76UVE1xyCGNTojH9h",
+      "chain": "bitcoin",
+      "status": "sanctioned",
+      "matches": [
+        {
+          "entityId": "ofac-identity-17012",
+          "entityName": null,
+          "source": "ofac_sdn",
+          "category": "sanctions",
+          "severity": "critical"
+        }
+      ],
+      "screenedAt": "2026-04-05T17:30:47.770Z"
+    }
+  ],
+  "dataSources": ["ofac_sdn", "opensanctions", "community", "chainalysis"],
+  "proof": {
+    "screeningId": "d3b1649c-1ede-4bc7-adc3-a8fadf6b254c",
+    "timestamp": "2026-04-05T17:30:47.758Z",
+    "resultsHash": "0c17939f1da5e18806deae3444851c9f6f286d3b7219421fdc8bd29a084bd011",
+    "dataSources": ["ofac_sdn", "opensanctions", "community", "chainalysis"],
+    "dataSnapshots": {
+      "ofac_sdn": {
+        "blobName": "compliance/ofac_sdn/0cf0c1e8-....json",
+        "shelbyUrl": "https://api.testnet.shelby.xyz/..."
+      }
+    }
+  },
+  "rateLimit": {
+    "freeLimit": 10,
+    "freeRemaining": 9,
+    "freeReset": "2026-04-06T10:00:00.000Z",
+    "billableAddresses": 0,
+    "creditCharged": 0
+  }
+}
+```
+</ResponseExample>

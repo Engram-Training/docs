@@ -1,0 +1,103 @@
+---
+title: "Compliance Shield"
+sidebarTitle: "Overview"
+description: "Screen any blockchain address against global sanctions lists with verifiable on-chain proofs."
+icon: "shield-halved"
+---
+
+## What is Compliance Shield?
+
+Compliance Shield is Engram's built-in sanctions screening service. It checks blockchain addresses against multiple global sanctions databases and returns verifiable results — with cryptographic proofs stored on [Shelby Protocol](https://shelby.xyz).
+
+<CardGroup cols={2}>
+  <Card title="Multi-source screening" icon="database">
+    OFAC SDN, OpenSanctions, Chainalysis, and community reports — all in one call.
+  </Card>
+  <Card title="Verifiable proofs" icon="certificate">
+    Every screen generates an immutable SHA-256 proof on Shelby that anyone can independently verify.
+  </Card>
+  <Card title="Any chain" icon="link">
+    Works with Ethereum, Bitcoin, Solana, Aptos, Polygon, BSC, Arbitrum, and more.
+  </Card>
+  <Card title="Freemium" icon="gift">
+    10 free screens per hour per developer. Pay-as-you-go after that.
+  </Card>
+</CardGroup>
+
+## Data Sources
+
+| Source | Coverage | Update Frequency |
+|---|---|---|
+| **OFAC SDN** | US Treasury sanctions (788 crypto addresses) | Every 6 hours |
+| **OpenSanctions** | Global sanctions (1,497 crypto addresses) | Every 12 hours |
+| **Chainalysis** | Real-time global sanctions oracle | Per-request |
+| **Community** | User/agent-submitted reports | Real-time |
+
+## Architecture
+
+All raw compliance data is stored as **plain JSON on Shelby** — human-readable and directly verifiable. PostgreSQL acts as a thin search index with pointers to the Shelby blobs.
+
+```
+Agent screens address "0xABC"
+        │
+        ▼
+┌── ComplianceIndex (Postgres) ─────┐
+│  Fast indexed lookup across:      │
+│  OFAC + OpenSanctions + Community │
+└─────────────┬─────────────────────┘
+              │
+    ┌─────────┴──────────┐
+    ▼                    ▼
+Screen result         Proof uploaded
+returned (~10ms)      to Shelby (async)
+```
+
+## Quick Start
+
+<CodeGroup>
+
+```typescript SDK
+import { Engram } from '@engramtraining/sdk';
+
+const engram = new Engram({ apiKey: 'sk_live_...' });
+
+const result = await engram.compliance.screen({
+  addresses: [{ address: '0xABC...', chain: 'ethereum' }],
+});
+
+console.log(result.results[0].status); // "clean" | "sanctioned" | "flagged"
+```
+
+```bash cURL
+curl -X POST https://api.engram.training/v1/compliance/screen \
+  -H "Authorization: Bearer sk_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "addresses": [{"address": "0xABC...", "chain": "ethereum"}]
+  }'
+```
+
+</CodeGroup>
+
+## Pricing
+
+| Tier | Cost |
+|---|---|
+| First 10 addresses/hour | **Free** |
+| Additional addresses | 1 credit each |
+| Community reports | **Always free** |
+| Stats & proof lookups | **Always free** |
+
+Rate limit info is included in every response:
+
+```json
+{
+  "rateLimit": {
+    "freeLimit": 10,
+    "freeRemaining": 7,
+    "freeReset": "2026-04-06T10:00:00.000Z",
+    "billableAddresses": 0,
+    "creditCharged": 0
+  }
+}
+```

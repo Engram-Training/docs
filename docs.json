@@ -36,7 +36,8 @@
               "features/ttl-expiry",
               "features/pinning-importance",
               "features/compression",
-              "features/audit-trail"
+              "features/audit-trail",
+              "features/compliance"
             ]
           }
         ]
@@ -114,6 +115,15 @@
               "api-reference/advanced/audit",
               "api-reference/advanced/ttl-alerts",
               "api-reference/advanced/expiring"
+            ]
+          },
+          {
+            "group": "Compliance Shield",
+            "pages": [
+              "api-reference/compliance/screen",
+              "api-reference/compliance/proof",
+              "api-reference/compliance/report",
+              "api-reference/compliance/stats"
             ]
           }
         ]

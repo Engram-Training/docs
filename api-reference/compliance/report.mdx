@@ -1,0 +1,61 @@
+---
+title: "Submit Report"
+api: "POST /v1/compliance/report"
+description: "Submit a free community report for a suspicious blockchain address."
+---
+
+Community reports are **always free** — no credits charged. Reports with 3+ votes are auto-escalated to the sanctions index.
+
+## Request
+
+<ParamField body="address" type="string" required>
+  The blockchain address to report.
+</ParamField>
+
+<ParamField body="chain" type="string">
+  Chain identifier (e.g., `ethereum`, `bitcoin`).
+</ParamField>
+
+<ParamField body="category" type="string" required>
+  Report category: `scam`, `hack`, `exploit`, `theft`, `mixer`, `terrorism`, `sanctions_evasion`, `fraud`, `other`.
+</ParamField>
+
+<ParamField body="reason" type="string" required>
+  Detailed description of why this address is suspicious.
+</ParamField>
+
+<ParamField body="evidence" type="array">
+  Optional array of evidence URLs (transaction links, screenshots, etc.).
+</ParamField>
+
+## Response
+
+<ResponseField name="reportId" type="string">Unique report identifier.</ResponseField>
+<ResponseField name="status" type="string">`pending`, `confirmed`, or `rejected`.</ResponseField>
+<ResponseField name="autoEscalated" type="boolean">Whether this report was auto-escalated (3+ existing reports for this address).</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.engram.training/v1/compliance/report \
+  -H "Authorization: Bearer sk_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "0xSuspicious...",
+    "chain": "ethereum",
+    "category": "scam",
+    "reason": "Known rug pull operator — drained liquidity pool",
+    "evidence": ["https://etherscan.io/tx/0x..."]
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "reportId": "rpt_abc123",
+  "status": "pending",
+  "autoEscalated": false,
+  "disclaimer": "This data is provided as-is from public sources..."
+}
+```
+</ResponseExample>

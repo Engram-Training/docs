@@ -1,0 +1,86 @@
+---
+title: "Verify Proof"
+api: "GET /v1/compliance/proof/{screeningId}"
+description: "Retrieve a screening proof from Shelby for independent verification."
+---
+
+## Path Parameters
+
+<ParamField path="screeningId" type="string" required>
+  The screening ID returned from a `POST /v1/compliance/screen` call.
+</ParamField>
+
+## Response
+
+<ResponseField name="proof" type="object">
+  The full screening proof envelope.
+  <Expandable>
+    <ResponseField name="version" type="number">Proof format version.</ResponseField>
+    <ResponseField name="screeningId" type="string">Unique screening identifier.</ResponseField>
+    <ResponseField name="timestamp" type="string">When the screening was performed.</ResponseField>
+    <ResponseField name="resultsHash" type="string">SHA-256 hash of the results array.</ResponseField>
+    <ResponseField name="dataSources" type="array">Data sources consulted.</ResponseField>
+    <ResponseField name="dataSnapshots" type="object">Links to the exact Shelby blobs used during screening.</ResponseField>
+    <ResponseField name="agentId" type="string">Agent that performed the screening.</ResponseField>
+    <ResponseField name="addressCount" type="number">Number of addresses screened.</ResponseField>
+    <ResponseField name="results" type="array">Summary of each address result.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="shelbyUrl" type="string">
+  Direct URL to the proof blob on Shelby. Visit this URL to independently verify the proof content.
+</ResponseField>
+
+## How to Verify
+
+1. Fetch the proof via this endpoint (or directly from the `shelbyUrl`)
+2. Download the data snapshots referenced in `dataSnapshots`
+3. Re-run the screening logic against the snapshot data
+4. Compare your computed results hash against `resultsHash`
+
+If the hashes match, the screening result has not been tampered with.
+
+<RequestExample>
+```bash cURL
+curl https://api.engram.training/v1/compliance/proof/d3b1649c-1ede-4bc7-adc3-a8fadf6b254c \
+  -H "Authorization: Bearer sk_live_..."
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "proof": {
+    "version": 1,
+    "screeningId": "d3b1649c-1ede-4bc7-adc3-a8fadf6b254c",
+    "timestamp": "2026-04-05T17:30:47.758Z",
+    "resultsHash": "0c17939f1da5e18806deae3444851c9f6f286d3b...",
+    "dataSources": ["ofac_sdn", "opensanctions", "community"],
+    "dataSnapshots": {
+      "ofac_sdn": {
+        "blobName": "compliance/ofac_sdn/0cf0c1e8-....json",
+        "shelbyUrl": "https://api.testnet.shelby.xyz/..."
+      },
+      "opensanctions": {
+        "blobName": "compliance/opensanctions/aa642ba0-....json",
+        "shelbyUrl": "https://api.testnet.shelby.xyz/..."
+      }
+    },
+    "agentId": "c836ec60-...",
+    "developerId": "25fc879f-...",
+    "addressCount": 1,
+    "results": [
+      {
+        "address": "12QtD5BFwRsdNsAZY76UVE1xyCGNTojH9h",
+        "chain": "bitcoin",
+        "status": "sanctioned",
+        "matchCount": 2,
+        "sources": ["ofac_sdn", "opensanctions"]
+      }
+    ]
+  },
+  "shelbyUrl": "https://api.testnet.shelby.xyz/.../compliance/proofs/d3b1649c-....json",
+  "disclaimer": "This proof was uploaded to Shelby at screening time. Verify independently at the shelbyUrl."
+}
+```
+</ResponseExample>

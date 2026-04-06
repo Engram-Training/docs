@@ -1,0 +1,54 @@
+---
+title: "Get Stats"
+api: "GET /v1/compliance/stats"
+description: "Get aggregate compliance statistics. Public endpoint — no authentication required."
+---
+
+## Response
+
+<ResponseField name="compliance" type="object">
+  <Expandable>
+    <ResponseField name="totalAddresses" type="number">Total indexed addresses across all sources.</ResponseField>
+    <ResponseField name="bySource" type="object">Address count per data source.</ResponseField>
+    <ResponseField name="lastIngestion" type="object">Most recent data sync timestamp and source.</ResponseField>
+    <ResponseField name="totalScreenings" type="number">All-time screening requests.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="community" type="object">
+  <Expandable>
+    <ResponseField name="totalReports" type="number">Total community reports submitted.</ResponseField>
+    <ResponseField name="byStatus" type="object">Reports by status (pending/confirmed/rejected).</ResponseField>
+    <ResponseField name="byCategory" type="object">Reports by category.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl https://api.engram.training/v1/compliance/stats
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "compliance": {
+    "totalAddresses": 2219,
+    "bySource": {
+      "ofac_sdn": 772,
+      "opensanctions": 1447
+    },
+    "lastIngestion": {
+      "source": "ofac_sdn",
+      "at": "2026-04-05T17:40:48.710Z"
+    },
+    "totalScreenings": 14
+  },
+  "community": {
+    "totalReports": 3,
+    "byStatus": {"pending": 2, "confirmed": 1},
+    "byCategory": {"scam": 2, "hack": 1}
+  }
+}
+```
+</ResponseExample>
