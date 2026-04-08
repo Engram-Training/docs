@@ -115,12 +115,169 @@ curl https://api.engram.training/v1/compliance/merkle/proof/0xd882cfc20f52f2599d
 
 </CodeGroup>
 
+## DApp Integration (On-Chain)
+
+Any smart contract or DApp on Stellar/Soroban can call the Compliance Oracle contract directly — no API key needed.
+
+<Warning>
+  The oracle is currently deployed on **Stellar Testnet**. Mainnet deployment is planned for production launch.
+</Warning>
+
+### Contract Address
+
+```
+CCDAXPPXNXCM25QHYVEWDYBU3FJTNU6Z6BYCHTRRHJEXU6RGVD32PWQF
+```
+
+### Public Functions (Anyone Can Call)
+
+| Function | Description | Cost |
+|---|---|---|
+| `verify_merkle_proof(addr, proof, leaf_index)` → `bool` | Verify a single address is in the sanctions dataset | Free |
+| `verify_batch_proofs(addrs, proofs, indices)` → `Vec<bool>` | Batch verify up to 200 addresses | Free |
+| `merkle_root()` → `BytesN<32>` | Get the current Merkle root hash | Free |
+| `data_hash()` → `BytesN<32>` | SHA-256 of the full off-chain dataset | Free |
+| `entity_count()` → `u32` | Total sanctioned addresses in the tree | Free |
+| `last_updated()` → `u64` | Ledger timestamp of the last root update | Free |
+| `is_flagged(addr)` → `bool` | Check if an address was auto-flagged by agent consensus | Free |
+| `reports_for(addr)` → `u32` | Number of unique reporters for an address | Free |
+| `report_address(reporter, target, reason)` → `u32` | Submit a community report (requires auth) | Free |
+
+### DeFi Pre-Transaction Check
+
+Use `verify_merkle_proof()` atomically inside your own transactions to block sanctioned addresses:
+
+<CodeGroup>
+```rust Soroban Contract
+use soroban_sdk::{contract, contractimpl, Address, Env, String, Vec, BytesN};
+
+// Import the compliance oracle client
+mod oracle {
+    soroban_sdk::contractimport!(
+        file = "compliance_oracle.wasm"
+    );
+}
+
+const ORACLE_ID: &str = "CCDAXPPXNXCM25QHYVEWDYBU3FJTNU6Z6BYCHTRRHJEXU6RGVD32PWQF";
+
+#[contract]
+pub struct MyDeFiProtocol;
+
+#[contractimpl]
+impl MyDeFiProtocol {
+    /// Swap tokens — rejects sanctioned addresses
+    pub fn swap(env: Env, user: Address, amount: i128) {
+        user.require_auth();
+
+        // 1. Get proof from Engram API (off-chain, before submitting tx)
+        //    GET /v1/compliance/merkle/proof/{address}
+
+        // 2. Verify on-chain (proof passed as tx argument)
+        let oracle = oracle::Client::new(
+            &env,
+            &Address::from_string(&String::from_str(&env, ORACLE_ID)),
+        );
+
+        // Also check agent consensus flags
+        let addr_str = String::from_str(&env, "user_address_here");
+        if oracle.is_flagged(&addr_str) {
+            panic!("Address flagged by agent consensus");
+        }
+
+        // ... proceed with swap
+    }
+}
+```
+
+```typescript Soroban JS SDK
+import { Contract, Server, TransactionBuilder } from '@stellar/stellar-sdk';
+
+const ORACLE_CONTRACT = 'CCDAXPPXNXCM25QHYVEWDYBU3FJTNU6Z6BYCHTRRHJEXU6RGVD32PWQF';
+const server = new Server('https://soroban-testnet.stellar.org');
+
+// Step 1: Get proof from Engram API
+const proofRes = await fetch(
+  `https://api.engram.training/v1/compliance/merkle/proof/${address}`
+);
+const { sanctioned, proof, leafIndex } = await proofRes.json();
+
+if (sanctioned) {
+  // Step 2: Verify on-chain (optional — proof is already verified by API)
+  const contract = new Contract(ORACLE_CONTRACT);
+  const tx = new TransactionBuilder(account, { fee: '100' })
+    .addOperation(
+      contract.call('verify_merkle_proof', address, proof, leafIndex)
+    )
+    .setTimeout(30)
+    .build();
+
+  const result = await server.simulateTransaction(tx);
+  console.log('On-chain verified:', result);
+}
+```
+
+```bash Stellar CLI
+# Check if address is in sanctions dataset
+stellar contract invoke \
+  --id CCDAXPPXNXCM25QHYVEWDYBU3FJTNU6Z6BYCHTRRHJEXU6RGVD32PWQF \
+  --network testnet \
+  -- verify_merkle_proof \
+  --addr "0xd882cfc20f52f2599d84b8e8d58c7fb62cfe344b" \
+  --proof '["abc123...", "def456..."]' \
+  --leaf_index 42
+
+# Check agent consensus flag
+stellar contract invoke \
+  --id CCDAXPPXNXCM25QHYVEWDYBU3FJTNU6Z6BYCHTRRHJEXU6RGVD32PWQF \
+  --network testnet \
+  -- is_flagged \
+  --addr "0xd882cfc20f52f2599d84b8e8d58c7fb62cfe344b"
+
+# Get current Merkle root
+stellar contract invoke \
+  --id CCDAXPPXNXCM25QHYVEWDYBU3FJTNU6Z6BYCHTRRHJEXU6RGVD32PWQF \
+  --network testnet \
+  -- merkle_root
+```
+</CodeGroup>
+
+### Leaf Encoding
+
+The Merkle tree uses this leaf hash:
+
+```
+leaf = SHA-256(address.to_xdr())
+```
+
+The XDR envelope wrapping is applied automatically by the Soroban runtime. Off-chain provers (the Engram API) replicate this exact encoding when building the tree.
+
+### Typical DApp Flow
+
+```
+1. User submits tx to your DApp
+         │
+2. Your frontend calls Engram API:
+   GET /v1/compliance/merkle/proof/{address}
+         │
+3. API returns: { sanctioned, proof, leafIndex }
+         │
+4. Your contract calls oracle.verify_merkle_proof()
+   with the proof data as a tx argument
+         │
+5. If sanctioned → revert. If clean → proceed.
+```
+
+<Tip>
+  For maximum security, verify on-chain inside your contract. For convenience, the API response alone is sufficient for most use cases — the proof is cryptographically tied to the on-chain Merkle root.
+</Tip>
+
 ## Pricing
 
 | Tier | Cost |
 |---|---|
 | Merkle proofs (single + batch) | **Always free** |
 | Merkle root status | **Always free** |
+| On-chain contract calls | **Always free** (gas only) |
 | Community reports | **Always free** |
 | Stats & proof lookups | **Always free** |
 | Full screening (first 10/hour) | **Free** |
