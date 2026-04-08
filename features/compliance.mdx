@@ -1,26 +1,26 @@
 ---
 title: "Compliance Shield"
 sidebarTitle: "Overview"
-description: "Screen any blockchain address against global sanctions lists with verifiable on-chain proofs."
+description: "Screen any blockchain address against global sanctions lists with verifiable on-chain Merkle proofs."
 icon: "shield-halved"
 ---
 
 ## What is Compliance Shield?
 
-Compliance Shield is Engram's built-in sanctions screening service. It checks blockchain addresses against multiple global sanctions databases and returns verifiable results — with cryptographic proofs stored on [Shelby Protocol](https://shelby.xyz).
+Compliance Shield is Engram's built-in sanctions screening service. It checks blockchain addresses against multiple global sanctions databases and returns verifiable results — backed by cryptographic Merkle proofs anchored to a smart contract.
 
 <CardGroup cols={2}>
   <Card title="Multi-source screening" icon="database">
     OFAC SDN, OpenSanctions, Chainalysis, and community reports — all in one call.
   </Card>
-  <Card title="Verifiable proofs" icon="certificate">
-    Every screen generates an immutable SHA-256 proof on Shelby that anyone can independently verify.
+  <Card title="Merkle-verified" icon="certificate">
+    Every sanctioned address is part of an on-chain Merkle tree. Proofs can be verified atomically inside smart contract transactions.
   </Card>
   <Card title="Any chain" icon="link">
-    Works with Ethereum, Bitcoin, Solana, Aptos, Polygon, BSC, Arbitrum, and more.
+    Works with Ethereum, Bitcoin, Solana, Stellar, Tron, and more. One API, every chain.
   </Card>
-  <Card title="Freemium" icon="gift">
-    10 free screens per hour per developer. Pay-as-you-go after that.
+  <Card title="Agent consensus" icon="users">
+    AI agents can report suspicious addresses. When enough agents independently flag the same wallet, it's auto-flagged on-chain.
   </Card>
 </CardGroup>
 
@@ -31,30 +31,72 @@ Compliance Shield is Engram's built-in sanctions screening service. It checks bl
 | **OFAC SDN** | US Treasury sanctions (788 crypto addresses) | Every 6 hours |
 | **OpenSanctions** | Global sanctions (1,497 crypto addresses) | Every 12 hours |
 | **Chainalysis** | Real-time global sanctions oracle | Per-request |
-| **Community** | User/agent-submitted reports | Real-time |
+| **Community** | Agent-submitted reports with consensus | Real-time |
 
-## Architecture
+## Architecture (v0.5.0)
 
-All raw compliance data is stored as **plain JSON on Shelby** — human-readable and directly verifiable. PostgreSQL acts as a thin search index with pointers to the Shelby blobs.
+Compliance Shield uses a **Merkle tree** to represent the entire sanctions dataset. The tree root is pushed to a smart contract after each ingestion. This gives you two verification paths:
+
+### On-Chain (Smart Contract)
+
+DeFi applications call the contract directly to verify proofs atomically inside their own transactions:
 
 ```
-Agent screens address "0xABC"
+verify_merkle_proof(address, proof, leaf_index) → bool
+verify_batch_proofs(addresses, proofs, leaf_indices) → Vec<bool>
+is_flagged(address) → bool               // agent consensus check
+report_address(reporter, target, reason)  // community reporting
+```
+
+### Off-Chain (REST API)
+
+AI agents and off-chain apps call the Engram API:
+
+```
+GET  /v1/compliance/merkle/proof/:address   → single proof
+POST /v1/compliance/merkle/proof/batch      → batch proofs
+GET  /v1/compliance/merkle/root             → root + sync status
+POST /v1/compliance/screen                  → full screening
+POST /v1/compliance/report                  → community report
+```
+
+Both paths reference the **same Merkle root**. Same data, same guarantees, different interfaces.
+
+```
+Agent / DeFi app screens address "0xABC"
         │
-        ▼
-┌── ComplianceIndex (Postgres) ─────┐
-│  Fast indexed lookup across:      │
-│  OFAC + OpenSanctions + Community │
-└─────────────┬─────────────────────┘
-              │
-    ┌─────────┴──────────┐
-    ▼                    ▼
-Screen result         Proof uploaded
-returned (~10ms)      to Shelby (async)
+        ├── On-chain path ──► Smart contract
+        │   verify_merkle_proof() → true/false
+        │
+        └── Off-chain path ──► Engram API
+            GET /merkle/proof/0xABC → proof + status
+            │
+            ├── Proof stored on Shelby (decentralized)
+            └── Merkle root matches on-chain root ✓
 ```
+
+## Agent Consensus
+
+Any agent can report a suspicious address via `report_address()`. Reports are tracked on-chain with deduplication:
+
+1. Each reporter can only flag a given address once
+2. When the number of unique reporters reaches the threshold (default: 10), the address is **auto-flagged** on-chain
+3. DeFi apps can check `is_flagged(address)` pre-emptively, or use `reports_for(address)` to see the current count
+
+<Note>
+  Agents don't need to wait for the threshold. `reports_for()` returns the live count from report #1, so agents can implement their own risk scoring.
+</Note>
 
 ## Quick Start
 
 <CodeGroup>
+
+```typescript MCP Tool
+// Any MCP-compatible agent can use this directly
+// Tool: verify_merkle_proof
+// Input: { "address": "0xd882cfc20f52f2599d84b8e8d58c7fb62cfe344b" }
+// Result: { sanctioned: true, proof: [...], leafIndex: 42 }
+```
 
 ```typescript SDK
 import { Engram } from '@engramtraining/sdk';
@@ -69,12 +111,7 @@ console.log(result.results[0].status); // "clean" | "sanctioned" | "flagged"
 ```
 
 ```bash cURL
-curl -X POST https://api.engram.training/v1/compliance/screen \
-  -H "Authorization: Bearer sk_live_..." \
-  -H "Content-Type: application/json" \
-  -d '{
-    "addresses": [{"address": "0xABC...", "chain": "ethereum"}]
-  }'
+curl https://api.engram.training/v1/compliance/merkle/proof/0xd882cfc20f52f2599d84b8e8d58c7fb62cfe344b
 ```
 
 </CodeGroup>
@@ -83,21 +120,9 @@ curl -X POST https://api.engram.training/v1/compliance/screen \
 
 | Tier | Cost |
 |---|---|
-| First 10 addresses/hour | **Free** |
-| Additional addresses | 1 credit each |
+| Merkle proofs (single + batch) | **Always free** |
+| Merkle root status | **Always free** |
 | Community reports | **Always free** |
 | Stats & proof lookups | **Always free** |
-
-Rate limit info is included in every response:
-
-```json
-{
-  "rateLimit": {
-    "freeLimit": 10,
-    "freeRemaining": 7,
-    "freeReset": "2026-04-06T10:00:00.000Z",
-    "billableAddresses": 0,
-    "creditCharged": 0
-  }
-}
-```
+| Full screening (first 10/hour) | **Free** |
+| Full screening (additional) | 1 credit each |

@@ -5,7 +5,7 @@ description: "Give any AI agent persistent memory through the Model Context Prot
 
 ## Overview
 
-The Engram MCP server lets any MCP-compatible AI agent — Claude Code, Cursor, Windsurf, and others — use Engram as its memory layer. Install once, and your agent gets 10 tools for storing, searching, and managing persistent, encrypted memory.
+The Engram MCP server lets any MCP-compatible AI agent — Claude Code, Cursor, Windsurf, and others — use Engram as its memory layer. Install once, and your agent gets 17 tools for storing, searching, and managing persistent, encrypted memory — plus built-in compliance screening.
 
 ```bash
 npx -y @engramtraining/mcp
@@ -101,7 +101,7 @@ curl -X POST "https://api.engram.training/v1/auth/agent-register" \
 
 ## Tools
 
-Once connected, your agent gets access to **10 tools** across memory, media, and billing.
+Once connected, your agent gets access to **17 tools** across memory, media, billing, and compliance.
 
 ### Memory Tools
 
@@ -216,6 +216,74 @@ Check your credit balance, USD value, and credits used this month. No parameters
 #### `get_pricing`
 
 View credit pricing and per-operation costs (read, write, update, delete). No parameters required.
+
+### Compliance Tools
+
+#### `screen_address`
+
+Screen wallet addresses against OFAC, OpenSanctions, Chainalysis, and community blacklists. Returns compliance status with match details.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `addresses` | array | ✅ | Addresses to screen (max 100). Each has `address` (string) and optional `chain` (string). |
+| `includeChainalysis` | boolean | ❌ | Check Chainalysis on-chain oracle for EVM addresses |
+| `includeCommunity` | boolean | ❌ | Include community blacklist reports (default: true) |
+
+---
+
+#### `report_address`
+
+Submit a community report for a suspicious wallet address. Free, no credit cost.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `address` | string | ✅ | Wallet address to report |
+| `chain` | string | ❌ | Blockchain name |
+| `category` | string | ✅ | Category: `scam`, `phishing`, `rugpull`, `theft`, `mixer`, `other` |
+| `reason` | string | ✅ | Why this address is suspicious (10–2000 chars) |
+| `evidence` | string[] | ❌ | Supporting evidence URLs |
+
+---
+
+#### `get_compliance_entity`
+
+Retrieve a specific compliance entry by UUID. Returns full entity data including addresses, source, severity, and proof info. Costs 1 credit.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | string | ✅ | Compliance entry UUID |
+
+---
+
+#### `compliance_stats`
+
+Get aggregate compliance statistics: total entries by source and category, last ingestion times, screening counts. Free, no credit cost. No parameters required.
+
+---
+
+#### `verify_merkle_proof`
+
+Check if a wallet address is in the sanctions dataset and get a cryptographic Merkle proof. The proof can be verified on the smart contract. Free, no credit cost.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `address` | string | ✅ | Wallet address to check (any chain) |
+
+---
+
+#### `verify_merkle_batch`
+
+Check multiple wallet addresses against the sanctions dataset in one call. Returns Merkle proofs for any sanctioned addresses. Free, no credit cost.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `addresses` | string[] | ✅ | Wallet addresses to check (max 100) |
+
+---
+
+#### `merkle_root_status`
+
+Get the current Merkle root from both the Engram API and the on-chain smart contract. Shows whether they are in sync, the entity count, and when the tree was last built. Free, no credit cost. No parameters required.
 
 ## Encryption
 

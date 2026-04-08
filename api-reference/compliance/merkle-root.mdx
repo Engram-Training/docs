@@ -1,0 +1,49 @@
+---
+title: "Merkle Root Status"
+api: "GET /v1/compliance/merkle/root"
+description: "Get the current Merkle root from the API and its on-chain sync status."
+---
+
+Returns the current Merkle root, entity count, data hash, and when the tree was last built. Use this to verify that the on-chain root matches the API.
+
+**Free — no credits charged.**
+
+## Response
+
+<ResponseField name="root" type="string">
+  The current Merkle root (hex-encoded, 32 bytes).
+</ResponseField>
+
+<ResponseField name="dataHash" type="string">
+  SHA-256 hash of the full sorted address list. Matches the on-chain `data_hash`.
+</ResponseField>
+
+<ResponseField name="entityCount" type="number">
+  Number of sanctioned addresses in the dataset.
+</ResponseField>
+
+<ResponseField name="treeSize" type="number">
+  Tree size (padded to next power of 2).
+</ResponseField>
+
+<ResponseField name="builtAt" type="string">
+  ISO timestamp of when the tree was last rebuilt.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl https://api.engram.training/v1/compliance/merkle/root
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "root": "16890407db296faf7ff3c80deb93f0bf...",
+  "dataHash": "12dc2d671a02203378b43163c8da05cc...",
+  "entityCount": 1447,
+  "treeSize": 2048,
+  "builtAt": "2026-04-08T06:00:00.000Z"
+}
+```
+</ResponseExample>

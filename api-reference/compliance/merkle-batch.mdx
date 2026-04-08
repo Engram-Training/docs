@@ -1,0 +1,67 @@
+---
+title: "Batch Merkle Proofs"
+api: "POST /v1/compliance/merkle/proof/batch"
+description: "Check multiple addresses against the sanctions dataset and get Merkle proofs for any that are sanctioned."
+---
+
+Check up to 100 addresses in a single call. Returns individual proof results for each address.
+
+**Free — no credits charged.**
+
+## Request Body
+
+<ParamField body="addresses" type="string[]" required>
+  Array of wallet addresses to check (max 100). Any chain.
+</ParamField>
+
+## Response
+
+<ResponseField name="results" type="array">
+  Array of proof objects, one per address. Each has the same shape as the single-address endpoint.
+</ResponseField>
+
+<ResponseField name="root" type="string">
+  The current Merkle root used for all proofs.
+</ResponseField>
+
+<ResponseField name="checkedAt" type="string">
+  ISO timestamp of when the check was performed.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.engram.training/v1/compliance/merkle/proof/batch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "addresses": [
+      "0xd882cfc20f52f2599d84b8e8d58c7fb62cfe344b",
+      "0x0000000000000000000000000000000000001234"
+    ]
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "results": [
+    {
+      "address": "0xd882cfc20f52f2599d84b8e8d58c7fb62cfe344b",
+      "sanctioned": true,
+      "leafIndex": 42,
+      "proof": ["a1b2c3...", "d4e5f6..."],
+      "root": "16890407db296faf..."
+    },
+    {
+      "address": "0x0000000000000000000000000000000000001234",
+      "sanctioned": false,
+      "leafIndex": -1,
+      "proof": [],
+      "root": "16890407db296faf..."
+    }
+  ],
+  "root": "16890407db296faf...",
+  "checkedAt": "2026-04-08T08:30:00.000Z"
+}
+```
+</ResponseExample>

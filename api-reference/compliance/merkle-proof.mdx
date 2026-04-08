@@ -1,0 +1,90 @@
+---
+title: "Get Merkle Proof"
+api: "GET /v1/compliance/merkle/proof/{address}"
+description: "Check if an address is sanctioned and get a cryptographic Merkle proof that can be verified on-chain."
+---
+
+Returns a Merkle inclusion proof for the given address. If the address is in the sanctions dataset, the proof can be submitted to the smart contract for on-chain verification.
+
+**Free — no credits charged.**
+
+## Path Parameters
+
+<ParamField path="address" type="string" required>
+  Wallet address to check (any chain — Ethereum, Bitcoin, Stellar, Solana, etc.)
+</ParamField>
+
+## Response
+
+<ResponseField name="address" type="string">The queried address.</ResponseField>
+
+<ResponseField name="sanctioned" type="boolean">
+  `true` if the address is in the sanctions dataset.
+</ResponseField>
+
+<ResponseField name="leafIndex" type="number">
+  The leaf position in the Merkle tree. `-1` if not sanctioned.
+</ResponseField>
+
+<ResponseField name="proof" type="string[]">
+  Array of hex-encoded sibling hashes (the Merkle path). Empty if not sanctioned.
+</ResponseField>
+
+<ResponseField name="root" type="string">
+  The current Merkle root (hex-encoded, 32 bytes). Matches the on-chain root.
+</ResponseField>
+
+## On-Chain Verification
+
+The proof returned by this endpoint can be verified directly on the smart contract:
+
+```rust
+contract.verify_merkle_proof(
+  address,     // The address string
+  proof,       // Vec<BytesN<32>> — the sibling hashes
+  leaf_index   // u32 — the leaf position
+)
+// Returns: true if the address is in the sanctioned dataset
+```
+
+<RequestExample>
+```bash cURL
+curl https://api.engram.training/v1/compliance/merkle/proof/0xd882cfc20f52f2599d84b8e8d58c7fb62cfe344b
+```
+
+```typescript SDK
+const result = await engram.compliance.merkleProof(
+  '0xd882cfc20f52f2599d84b8e8d58c7fb62cfe344b'
+);
+
+if (result.sanctioned) {
+  console.log('Sanctioned! Proof:', result.proof);
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json Sanctioned
+{
+  "address": "0xd882cfc20f52f2599d84b8e8d58c7fb62cfe344b",
+  "sanctioned": true,
+  "leafIndex": 42,
+  "proof": [
+    "a1b2c3d4e5f6...",
+    "f6e5d4c3b2a1...",
+    "1234567890ab..."
+  ],
+  "root": "16890407db296faf7ff3c80deb93f0bf..."
+}
+```
+
+```json Clean
+{
+  "address": "0x0000000000000000000000000000000000001234",
+  "sanctioned": false,
+  "leafIndex": -1,
+  "proof": [],
+  "root": "16890407db296faf7ff3c80deb93f0bf..."
+}
+```
+</ResponseExample>

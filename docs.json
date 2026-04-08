@@ -122,6 +122,9 @@
             "pages": [
               "api-reference/compliance/screen",
               "api-reference/compliance/proof",
+              "api-reference/compliance/merkle-proof",
+              "api-reference/compliance/merkle-batch",
+              "api-reference/compliance/merkle-root",
               "api-reference/compliance/report",
               "api-reference/compliance/stats"
             ]
