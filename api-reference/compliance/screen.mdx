@@ -4,6 +4,14 @@ api: "POST /v1/compliance/screen"
 description: "Screen one or more blockchain addresses against global sanctions lists."
 ---
 
+## Authentication
+
+This endpoint accepts **both** authentication methods:
+- **API Key**: `Authorization: Bearer sk_live_...` (for agents and programmatic access)
+- **Developer JWT**: `Authorization: Bearer <jwt>` (for dashboard and OAuth sessions)
+
+Billing is resolved to the developer account in both cases.
+
 ## Request
 
 <ParamField body="addresses" type="array" required>
@@ -18,13 +26,13 @@ description: "Screen one or more blockchain addresses against global sanctions l
   </Expandable>
 </ParamField>
 
-<ParamField body="includeChainalysis" type="boolean" default="false">
-  Enable Chainalysis API screening for richer global coverage. Works for any chain.
-</ParamField>
-
 <ParamField body="includeCommunity" type="boolean" default="true">
   Include community-submitted reports in the screening results.
 </ParamField>
+
+<Note>
+  All available data sources (OFAC, OpenSanctions, community reports) are used automatically. No opt-in toggles needed.
+</Note>
 
 ## Response
 
@@ -40,7 +48,7 @@ description: "Screen one or more blockchain addresses against global sanctions l
       <Expandable>
         <ResponseField name="entityId" type="string">Unique entity identifier.</ResponseField>
         <ResponseField name="entityName" type="string">Human-readable entity name (if available).</ResponseField>
-        <ResponseField name="source" type="string">Data source: `ofac_sdn`, `opensanctions`, `chainalysis`, `community`.</ResponseField>
+        <ResponseField name="source" type="string">Data source: `ofac_sdn`, `opensanctions`, `community`.</ResponseField>
         <ResponseField name="severity" type="string">`critical`, `high`, `medium`, or `low`.</ResponseField>
         <ResponseField name="shelbyUrl" type="string">Direct URL to the entity data on Shelby.</ResponseField>
       </Expandable>
@@ -93,8 +101,7 @@ curl -X POST https://api.engram.training/v1/compliance/screen \
   -d '{
     "addresses": [
       {"address": "12QtD5BFwRsdNsAZY76UVE1xyCGNTojH9h", "chain": "bitcoin"}
-    ],
-    "includeChainalysis": true
+    ]
   }'
 ```
 </RequestExample>
@@ -119,12 +126,12 @@ curl -X POST https://api.engram.training/v1/compliance/screen \
       "screenedAt": "2026-04-05T17:30:47.770Z"
     }
   ],
-  "dataSources": ["ofac_sdn", "opensanctions", "community", "chainalysis"],
+  "dataSources": ["ofac_sdn", "opensanctions", "community"],
   "proof": {
     "screeningId": "d3b1649c-1ede-4bc7-adc3-a8fadf6b254c",
     "timestamp": "2026-04-05T17:30:47.758Z",
     "resultsHash": "0c17939f1da5e18806deae3444851c9f6f286d3b7219421fdc8bd29a084bd011",
-    "dataSources": ["ofac_sdn", "opensanctions", "community", "chainalysis"],
+    "dataSources": ["ofac_sdn", "opensanctions", "community"],
     "dataSnapshots": {
       "ofac_sdn": {
         "blobName": "compliance/ofac_sdn/0cf0c1e8-....json",

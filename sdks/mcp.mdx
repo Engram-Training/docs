@@ -221,12 +221,11 @@ View credit pricing and per-operation costs (read, write, update, delete). No pa
 
 #### `screen_address`
 
-Screen wallet addresses against OFAC, OpenSanctions, Chainalysis, and community blacklists. Returns compliance status with match details.
+Screen wallet addresses against OFAC, OpenSanctions, and community blacklists. All available datasets are used automatically.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `addresses` | array | ✅ | Addresses to screen (max 100). Each has `address` (string) and optional `chain` (string). |
-| `includeChainalysis` | boolean | ❌ | Check Chainalysis on-chain oracle for EVM addresses |
 | `includeCommunity` | boolean | ❌ | Include community blacklist reports (default: true) |
 
 ---

@@ -11,7 +11,7 @@ Compliance Shield is Engram's built-in sanctions screening service. It checks bl
 
 <CardGroup cols={2}>
   <Card title="Multi-source screening" icon="database">
-    OFAC SDN, OpenSanctions, Chainalysis, and community reports — all in one call.
+    OFAC SDN, OpenSanctions, and community reports — all in one call. Every available dataset is used automatically.
   </Card>
   <Card title="Merkle-verified" icon="certificate">
     Every sanctioned address is part of an on-chain Merkle tree. Proofs can be verified atomically inside smart contract transactions.
@@ -28,9 +28,8 @@ Compliance Shield is Engram's built-in sanctions screening service. It checks bl
 
 | Source | Coverage | Update Frequency |
 |---|---|---|
-| **OFAC SDN** | US Treasury sanctions (788 crypto addresses) | Every 6 hours |
-| **OpenSanctions** | Global sanctions (1,497 crypto addresses) | Every 12 hours |
-| **Chainalysis** | Real-time global sanctions oracle | Per-request |
+| **OFAC SDN** | US Treasury sanctions (788 crypto addresses) | Every server restart |
+| **OpenSanctions** | Global sanctions (1,497 crypto addresses) | Every server restart |
 | **Community** | Agent-submitted reports with consensus | Real-time |
 
 ## Architecture (v0.5.0)
